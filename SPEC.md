@@ -4,7 +4,7 @@
 
 **Machine Learning-Based System for Lead Prioritization, Communication Channel Recommendation, and Personalized Message Generation.**
 
-LeadPilot is the sellable SaaS embodiment of that thesis: a sales inbox ranked by conversion probability, with best-channel recommendation, personalized first-touch copy, and SHAP-like explainability (EN + RU UI).
+LeadPilot is the sellable SaaS embodiment of that thesis: a sellable CRM with unified inbox, deals, chats, and tasks — differentiated by ML conversion scoring, best-channel recommendation, personalized first-touch copy, and SHAP-like explainability (EN + RU UI).
 
 ## Problem
 
@@ -17,10 +17,18 @@ B2B teams process leads chronologically or with crude rules. High-intent buyers 
 3. **Personalized first-touch message** — templates or LLM
 4. **Explainability** — signed factor contributions (logistic surrogate of offline XGBoost)
 
+## CRM data model (Zustand + localStorage `leadpilot-crm-v1`)
+
+companies · leads (companyId, applyScore) · threads · messages · deals · tasks · activities
+
+Seed: ~40 leads, 15–25 chat threads with SDR history, 12 deals across stages, tasks + timeline.
+
 ## Feature list (shipped MVP)
 
 - Marketing landing with hero, problem/product, how-it-works, offline metrics, pricing
-- Ranked dashboard with search, filters (channel / industry / source / min score), empty & loading states
+- CRM shell (shadcn Sidebar): Overview, Inbox/Chat, Leads, Companies, Deals kanban, Tasks, Metrics, Import, Settings
+- Ranked leads with search, filters (channel / industry / source / min score), empty & loading states
+- Unified inbox with unread badges, multi-message threads, AI composer
 - Keyboard: `/` focuses search; `Esc` clears search or filters
 - Lead detail: score, probability, channel mix, editable message, copy toast, regenerate, outcomes
 - Bilingual explainability factor labels (RU + EN)
@@ -72,7 +80,7 @@ flowchart TB
 ```
 
 - **Frontend:** Next.js App Router, TypeScript, Tailwind v4, shadcn/ui, Recharts
-- **State:** Zustand persisted to `localStorage` (`leadpilot-v2`)
+- **State:** Zustand persisted to `localStorage` (`leadpilot-crm-v1`)
 - **Scoring:** Pure TypeScript (`src/lib/score.ts`) — no Python on Vercel
 - **Messages:** `POST /api/generate` uses OpenAI/Anthropic if env keys exist; else templates (`src/lib/messages.ts`)
 

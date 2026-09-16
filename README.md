@@ -1,8 +1,8 @@
 # LeadPilot
 
-**ML lead prioritization · channel recommendation · personalized first-touch · explainability**
+**ML lead prioritization inside a full sales CRM** — inbox, deals, chats, companies, tasks — with channel recommendation, personalized first-touch, and explainability.
 
-Diploma SaaS MVP: score every lead 0–100, pick the best channel, draft the first message, show why — in English and Russian.
+Diploma SaaS MVP: score every lead 0–100, pick the best channel, draft/send messages in a real chat UX, manage pipeline — in English and Russian.
 
 ## Quick start
 
@@ -26,34 +26,45 @@ cp .env.example .env.local
 
 Without keys, `POST /api/generate` returns polished bilingual templates (still demo-ready).
 
-## Features
+## CRM modules
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Marketing landing + pricing |
+| `/app` | Overview KPIs, top leads, recent chats |
+| `/app/inbox` · `/app/inbox/[threadId]` | Unified inbox + full chat |
+| `/app/leads` | ML-ranked lead list |
+| `/app/leads/[id]` | Lead 360: score, channel, chat, explainability, timeline, deal stage |
+| `/app/companies` | Accounts |
+| `/app/deals` | Kanban pipeline (New → Won/Lost) with drag-and-drop |
+| `/app/tasks` | Follow-ups |
+| `/app/metrics` | Offline eval charts |
+| `/app/import` | CSV import |
+| `/app/settings` | Voice, language EN↔RU, demo reset |
+
+## Differentiator (diploma)
 
 - **Priority score (0–100)** — calibrated logistic surrogate of offline XGBoost
-- **Channel recommendation** — email / call / LinkedIn / messenger via softmax utilities
-- **First-touch messages** — templates or OpenAI/Anthropic; EN ↔ RU voice
+- **Channel recommendation** — email / call / LinkedIn / messenger via softmax
+- **First-touch + chat composer** — templates or OpenAI/Anthropic; EN ↔ RU
 - **Explainability** — signed factor contributions with bilingual labels
-- **Ranked inbox** — search, channel/industry/source filters, min-score slider, `/` + Esc shortcuts
-- **CSV import** — map common CRM columns and score on the fly
-- **Offline metrics** — ROC / lift / precision@K / vs chronological baseline
-- **Settings** — company voice, product pitch, language, demo reset
-- **Client demo store** — Zustand + `localStorage` (no DB required)
 
 ## Stack
 
 - Next.js App Router + TypeScript + Tailwind v4
-- shadcn/ui · Recharts · Zustand (+ localStorage) · sonner
+- shadcn/ui (Sidebar, Message, Bubble, …) · Recharts · Zustand (`leadpilot-crm-v1`) · @dnd-kit · sonner
 - Scoring & channel models encoded as **JS coefficients** (no Python on Vercel)
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  A[Seed / CSV leads] --> B[Feature vector]
+  A[Seed / CSV] --> B[Feature vector]
   B --> C[Logistic score 0-100]
   B --> D[Channel softmax]
-  C --> E[Dashboard + Detail]
+  C --> E[CRM: leads inbox deals]
   D --> E
-  E --> F[Message: template or LLM API]
+  E --> F[Chat threads + AI composer]
   C --> G[SHAP-like factors]
   G --> E
 ```
@@ -62,26 +73,10 @@ flowchart LR
 |--------|------|
 | `src/lib/score.ts` | Priority + channel + factor contributions |
 | `src/lib/messages.ts` | Template personalization + LLM prompt |
-| `src/lib/seed-leads.ts` | 72 synthetic B2B leads (varied industries/sources) |
+| `src/lib/seed-crm.ts` | ~40 leads, companies, 20+ threads, 12 deals, tasks |
 | `src/lib/eval-metrics.ts` | Frozen offline AUC / lift / precision |
-| `src/lib/factor-labels.ts` | RU+EN explainability labels |
-| `src/store/leads-store.ts` | Persist leads, outcomes, settings |
+| `src/store/leads-store.ts` | Persist CRM entities + settings |
 | `src/app/api/generate/route.ts` | OpenAI / Anthropic / template fallback |
-
-## Product routes
-
-| Route | Purpose |
-|-------|---------|
-| `/` | Marketing landing + pricing ($49 / $149 / $399) |
-| `/app` | Ranked inbox + keyboard-friendly filters |
-| `/app/leads/[id]` | Score, channel probs, message, explainability, outcomes |
-| `/app/import` | CSV import + sample download |
-| `/app/metrics` | Offline eval charts |
-| `/app/settings` | Voice, language EN↔RU, API key note |
-
-## Models (summary)
-
-Coefficients in `score.ts` document an offline path: **XGBoost → logistic calibration on synthetic CRM**. Runtime is a calibrated logistic regression (Edge-friendly). Channel choice is softmax over hand-tuned utilities.
 
 ### Offline metrics (frozen)
 
