@@ -1,5 +1,7 @@
 "use client";
 
+import { PluginGate } from "@/components/plugin-gate";
+
 import { useMemo } from "react";
 import Link from "next/link";
 import {
@@ -35,7 +37,7 @@ function DealCard({ deal, leadName }: { deal: Deal; leadName: string }) {
       {...listeners}
       {...attributes}
       className={cn(
-        "cursor-grab rounded-lg border border-border/60 bg-card p-3 shadow-sm active:cursor-grabbing",
+        "cursor-grab rounded-lg border border-zinc-200 bg-white p-3 shadow-sm active:cursor-grabbing",
         isDragging && "opacity-60 ring-2 ring-primary"
       )}
     >
@@ -75,11 +77,11 @@ function StageColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-h-[420px] w-[240px] shrink-0 flex-col rounded-xl border border-border/50 bg-muted/20",
-        isOver && "border-primary/50 bg-primary/5"
+        "flex min-h-[420px] w-[240px] shrink-0 flex-col rounded-xl border border-zinc-200 bg-zinc-50",
+        isOver && "border-blue-300 bg-blue-50/60"
       )}
     >
-      <div className="flex items-center justify-between border-b border-border/40 px-3 py-2">
+      <div className="flex items-center justify-between border-b border-zinc-200 bg-white/80 px-3 py-2">
         <div>
           <p className="text-sm font-semibold">{title}</p>
           <p className="text-[10px] text-muted-foreground">
@@ -139,6 +141,7 @@ export default function DealsPage() {
   }
 
   return (
+    <PluginGate id="deals">
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
@@ -193,5 +196,6 @@ export default function DealsPage() {
         </CardContent>
       </Card>
     </div>
+  </PluginGate>
   );
 }

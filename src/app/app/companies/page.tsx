@@ -1,5 +1,7 @@
 "use client";
 
+import { PluginGate } from "@/components/plugin-gate";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useLeadsStore } from "@/store/leads-store";
@@ -47,6 +49,7 @@ export default function CompaniesPage() {
   }
 
   return (
+    <PluginGate id="companies">
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -128,5 +131,6 @@ export default function CompaniesPage() {
         </CardContent>
       </Card>
     </div>
+  </PluginGate>
   );
 }

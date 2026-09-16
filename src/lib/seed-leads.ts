@@ -109,7 +109,7 @@ export function createSeedLeads(count = 64): Lead[] {
       companyName: "LeadPilot",
       voice: "Consultative, concise, value-first. No hype. Mention one concrete outcome.",
       language: "en",
-      productPitch: "AI lead prioritization with channel recommendation and personalized first-touch messages.",
+      productPitch: "Stop FIFO queues and tool-switching: ML priority, best channel, personalized first-touch — in one CRM inbox.",
     });
 
     leads.push({ ...scored, message });

@@ -19,13 +19,15 @@ import { CRM_SEED } from "@/lib/seed-crm";
 import { applyScore } from "@/lib/score";
 import { generateMessage } from "@/lib/messages";
 import { parseLeadsCsv } from "@/lib/csv";
+import { DEFAULT_PLUGINS, mergePlugins } from "@/lib/plugins";
 
 const defaultSettings: CompanySettings = {
   companyName: "LeadPilot",
   voice: "Consultative, concise, value-first. No hype. Mention one concrete outcome.",
   language: "en",
   productPitch:
-    "AI lead prioritization with channel recommendation and personalized first-touch messages.",
+    "Stop FIFO queues and tool-switching: ML priority, best channel, personalized first-touch — in one CRM inbox.",
+  plugins: { ...DEFAULT_PLUGINS },
 };
 
 function withMessages(leads: Lead[], settings: CompanySettings): Lead[] {
@@ -105,7 +107,16 @@ export const useLeadsStore = create<State>()(
           }),
         }),
       updateSettings: (partial) =>
-        set((s) => ({ settings: { ...s.settings, ...partial } })),
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            ...partial,
+            plugins: mergePlugins({
+              ...s.settings.plugins,
+              ...(partial.plugins || {}),
+            }),
+          },
+        })),
       updateOutcome: (id, outcome) =>
         set((s) => ({
           leads: s.leads.map((l) => (l.id === id ? { ...l, outcome } : l)),
@@ -327,7 +338,14 @@ export const useLeadsStore = create<State>()(
         settings: s.settings,
       }),
       onRehydrateStorage: () => (state) => {
-        state?.setHydrated(true);
+        if (state) {
+          state.settings = {
+            ...defaultSettings,
+            ...state.settings,
+            plugins: mergePlugins(state.settings?.plugins),
+          };
+          state.setHydrated(true);
+        }
       },
     }
   )

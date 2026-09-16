@@ -1,5 +1,7 @@
 "use client";
 
+import { PluginGate } from "@/components/plugin-gate";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { FilterX, Inbox } from "lucide-react";
@@ -104,6 +106,7 @@ export default function DashboardPage() {
   }
 
   return (
+    <PluginGate id="leads">
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -181,7 +184,7 @@ export default function DashboardPage() {
             step={5}
             value={minScore}
             onChange={(e) => setMinScore(Number(e.target.value))}
-            className="w-40 accent-indigo-400"
+            className="w-40 accent-[#266df0]"
             aria-valuemin={0}
             aria-valuemax={90}
             aria-valuenow={minScore}
@@ -273,5 +276,6 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
     </div>
+  </PluginGate>
   );
 }

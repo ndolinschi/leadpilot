@@ -9,6 +9,7 @@ import { ScoreBar } from "@/components/score-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { mergePlugins, isPluginEnabled } from "@/lib/plugins";
 
 export default function OverviewPage() {
   const lang = useLeadsStore((s) => s.settings.language);
@@ -18,6 +19,7 @@ export default function OverviewPage() {
   const tasks = useLeadsStore((s) => s.tasks);
   const hydrated = useLeadsStore((s) => s.hydrated);
   const i18n = t(lang);
+  const plugins = useLeadsStore((s) => mergePlugins(s.settings.plugins));
 
   const unread = threads.reduce((n, th) => n + (th.unread || 0), 0);
   const pipeline = deals
@@ -45,15 +47,15 @@ export default function OverviewPage() {
   }
 
   const kpis = [
-    { label: i18n.app.kpiLeads, value: String(leads.length), href: "/app/leads" },
-    { label: i18n.app.kpiUnread, value: String(unread), href: "/app/inbox" },
-    {
+    isPluginEnabled(plugins, "leads") && { label: i18n.app.kpiLeads, value: String(leads.length), href: "/app/leads" },
+    isPluginEnabled(plugins, "inbox") && { label: i18n.app.kpiUnread, value: String(unread), href: "/app/inbox" },
+    isPluginEnabled(plugins, "deals") && {
       label: i18n.app.kpiPipeline,
       value: `$${Math.round(pipeline / 1000)}k`,
       href: "/app/deals",
     },
-    { label: i18n.app.kpiTasks, value: String(openTasks), href: "/app/tasks" },
-  ];
+    isPluginEnabled(plugins, "tasks") && { label: i18n.app.kpiTasks, value: String(openTasks), href: "/app/tasks" },
+  ].filter(Boolean) as { label: string; value: string; href: string }[];
 
   return (
     <div className="space-y-6">

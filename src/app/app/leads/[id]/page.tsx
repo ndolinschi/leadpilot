@@ -1,5 +1,7 @@
 "use client";
 
+import { usePluginEnabled } from "@/components/plugin-gate";
+
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -34,6 +36,7 @@ export default function LeadDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const aiOn = usePluginEnabled("ai-scoring");
   const { id } = use(params);
   const lang = useLeadsStore((s) => s.settings.language);
   const settings = useLeadsStore((s) => s.settings);
@@ -264,14 +267,15 @@ export default function LeadDetailPage({
 
         <div className="space-y-6 lg:col-span-2">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Card className="border-indigo-400/20 bg-indigo-500/5">
+            {aiOn && (
+            <Card className="border-[#266df0]/20 bg-[#266df0]/5">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">
                   {i18n.detail.priority}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-5xl font-semibold tabular-nums text-indigo-200">
+                <div className="text-5xl font-semibold tabular-nums text-[#266df0]">
                   {(lead.score ?? 0).toFixed(1)}
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -281,7 +285,9 @@ export default function LeadDetailPage({
                 <ScoreBar score={lead.score ?? 0} className="mt-4" />
               </CardContent>
             </Card>
+            )}
 
+            {aiOn && (
             <Card className="border-border/60 bg-card/70">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-muted-foreground">
@@ -321,6 +327,7 @@ export default function LeadDetailPage({
                 )}
               </CardContent>
             </Card>
+            )}
           </div>
 
           <Tabs defaultValue="chat">
@@ -518,8 +525,8 @@ function FactorGroup({
                 <span
                   className={
                     tone === "up"
-                      ? "tabular-nums text-emerald-300"
-                      : "tabular-nums text-rose-300"
+                      ? "tabular-nums text-emerald-600"
+                      : "tabular-nums text-rose-600"
                   }
                 >
                   {f.contribution > 0 ? "+" : ""}

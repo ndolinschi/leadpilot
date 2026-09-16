@@ -1,5 +1,7 @@
 "use client";
 
+import { PluginGate } from "@/components/plugin-gate";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -72,6 +74,7 @@ export default function ImportPage() {
   }
 
   return (
+    <PluginGate id="import">
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
@@ -84,7 +87,7 @@ export default function ImportPage() {
 
       <Card className="border-border/60 bg-card/70 border-dashed">
         <CardContent className="flex flex-col items-center gap-4 py-12">
-          <div className="flex size-12 items-center justify-center rounded-full bg-indigo-500/15 text-indigo-300">
+          <div className="flex size-12 items-center justify-center rounded-full bg-[#266df0]/10 text-[#266df0]">
             <Upload className="size-5" />
           </div>
           <input
@@ -142,5 +145,6 @@ export default function ImportPage() {
         </Card>
       )}
     </div>
+  </PluginGate>
   );
 }

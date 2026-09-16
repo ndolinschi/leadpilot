@@ -119,11 +119,22 @@ export type Activity = {
   at: string;
 };
 
+export type PluginId =
+  | "leads"
+  | "inbox"
+  | "deals"
+  | "companies"
+  | "tasks"
+  | "metrics"
+  | "ai-scoring"
+  | "import";
+
 export type CompanySettings = {
   companyName: string;
   voice: string;
   language: Lang;
   productPitch: string;
+  plugins?: Record<PluginId, boolean>;
 };
 
 export type ScoredLead = Lead &

@@ -1,5 +1,7 @@
 "use client";
 
+import { PluginGate } from "@/components/plugin-gate";
+
 import { useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -42,6 +44,7 @@ export default function TasksPage() {
   }
 
   return (
+    <PluginGate id="tasks">
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
@@ -141,5 +144,6 @@ export default function TasksPage() {
         </Card>
       </div>
     </div>
+  </PluginGate>
   );
 }

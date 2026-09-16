@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/message";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { cn } from "@/lib/utils";
+import { usePluginEnabled } from "@/components/plugin-gate";
 
 function initials(name: string) {
   return name
@@ -50,6 +51,7 @@ export function ChatView({
   const i18n = t(lang);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const aiOn = usePluginEnabled("ai-scoring");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -148,9 +150,10 @@ export function ChatView({
                 <MessageContent>
                   <Bubble
                     align={outbound ? "end" : "start"}
-                    variant={outbound ? "default" : "muted"}
+                    variant={outbound ? "tinted" : "muted"}
+                    className={outbound ? "*:data-[slot=bubble-content]:bg-blue-50 *:data-[slot=bubble-content]:text-zinc-900 *:data-[slot=bubble-content]:border-blue-100" : "*:data-[slot=bubble-content]:bg-zinc-100 *:data-[slot=bubble-content]:text-zinc-800"}
                   >
-                    <BubbleContent className="whitespace-pre-wrap">
+                    <BubbleContent className="whitespace-pre-wrap border">
                       {m.body}
                     </BubbleContent>
                   </Bubble>
@@ -181,15 +184,21 @@ export function ChatView({
             }}
           />
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={busy}
-              onClick={onGenerate}
-            >
-              <Sparkles className="size-3.5" />
-              {i18n.inbox.generateAi}
-            </Button>
+            {aiOn ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={busy}
+                onClick={onGenerate}
+              >
+                <Sparkles className="size-3.5" />
+                {i18n.inbox.generateAi}
+              </Button>
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                Enable AI Scoring plugin for channel-aware messages
+              </span>
+            )}
             <Button size="sm" disabled={!draft.trim()} onClick={onSend}>
               <Send className="size-3.5" />
               {i18n.inbox.send}

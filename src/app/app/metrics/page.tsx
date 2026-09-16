@@ -1,5 +1,7 @@
 "use client";
 
+import { PluginGate } from "@/components/plugin-gate";
+
 import {
   ResponsiveContainer,
   LineChart,
@@ -31,6 +33,7 @@ export default function MetricsPage() {
   const M = i18n.metricsPage;
 
   return (
+    <PluginGate id="metrics">
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{M.title}</h1>
@@ -199,6 +202,7 @@ export default function MetricsPage() {
         Holdout n={SUMMARY.nHoldout}. {SUMMARY.trainedOn}.
       </p>
     </div>
+  </PluginGate>
   );
 }
 
@@ -206,7 +210,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <Card className="border-border/60 bg-card/70">
       <CardContent className="pt-6">
-        <div className="text-2xl font-semibold tabular-nums text-indigo-200">
+        <div className="text-2xl font-semibold tabular-nums text-[#266df0]">
           {value}
         </div>
         <div className="mt-1 text-sm text-muted-foreground">{label}</div>

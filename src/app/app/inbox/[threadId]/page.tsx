@@ -1,5 +1,6 @@
 "use client";
 
+import { PluginGate } from "@/components/plugin-gate";
 import { use, useState } from "react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
@@ -23,19 +24,21 @@ export default function InboxThreadPage({
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{i18n.inbox.title}</h1>
-        <p className="text-sm text-muted-foreground">{i18n.inbox.subtitle}</p>
-      </div>
-      <Card className="overflow-hidden p-0">
-        <div className="grid min-h-[640px] lg:grid-cols-[340px_1fr]">
-          <div className="hidden lg:block">
-            <ThreadList query={q} onQueryChange={setQ} activeId={threadId} />
-          </div>
-          <ChatView threadId={threadId} />
+    <PluginGate id="inbox">
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{i18n.inbox.title}</h1>
+          <p className="text-sm text-muted-foreground">{i18n.inbox.subtitle}</p>
         </div>
-      </Card>
-    </div>
+        <Card className="overflow-hidden p-0">
+          <div className="grid min-h-[640px] lg:grid-cols-[340px_1fr]">
+            <div className="hidden lg:block">
+              <ThreadList query={q} onQueryChange={setQ} activeId={threadId} />
+            </div>
+            <ChatView threadId={threadId} />
+          </div>
+        </Card>
+      </div>
+    </PluginGate>
   );
 }

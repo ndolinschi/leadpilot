@@ -1,5 +1,7 @@
 "use client";
 
+import { PluginGate } from "@/components/plugin-gate";
+
 import { useState } from "react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
@@ -17,6 +19,7 @@ export default function InboxPage() {
   }
 
   return (
+    <PluginGate id="inbox">
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{i18n.inbox.title}</h1>
@@ -34,5 +37,6 @@ export default function InboxPage() {
         </div>
       </Card>
     </div>
+  </PluginGate>
   );
 }

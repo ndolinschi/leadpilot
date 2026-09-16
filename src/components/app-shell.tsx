@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import {
   LayoutDashboard,
   Inbox,
@@ -12,7 +13,7 @@ import {
   LineChart,
   Upload,
   Settings,
-  Sparkles,
+  type LucideIcon,
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
@@ -36,60 +37,67 @@ import {
   SidebarTrigger,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import {
+  mergePlugins,
+  navPlugins,
+  isPluginEnabled,
+  type PluginId,
+} from "@/lib/plugins";
 
-const mainLinks = [
-  { href: "/app", icon: LayoutDashboard, key: "dashboard" as const, exact: true },
-  { href: "/app/inbox", icon: Inbox, key: "inbox" as const },
-  { href: "/app/leads", icon: Users, key: "leads" as const },
-  { href: "/app/companies", icon: Building2, key: "companies" as const },
-  { href: "/app/deals", icon: Kanban, key: "deals" as const },
-  { href: "/app/tasks", icon: CheckSquare, key: "tasks" as const },
-];
+const ICONS: Record<string, LucideIcon> = {
+  inbox: Inbox,
+  leads: Users,
+  companies: Building2,
+  deals: Kanban,
+  tasks: CheckSquare,
+  metrics: LineChart,
+  import: Upload,
+};
 
-const secondaryLinks = [
-  { href: "/app/metrics", icon: LineChart, key: "metrics" as const },
-  { href: "/app/import", icon: Upload, key: "import" as const },
-  { href: "/app/settings", icon: Settings, key: "settings" as const },
-];
-
-function navLabel(
+function pluginNavLabel(
   i18n: ReturnType<typeof t>,
-  key: (typeof mainLinks)[number]["key"] | (typeof secondaryLinks)[number]["key"]
+  key: "leads" | "inbox" | "deals" | "companies" | "tasks" | "metrics" | "import"
 ) {
-  switch (key) {
-    case "dashboard":
-      return i18n.nav.dashboard;
-    case "inbox":
-      return i18n.nav.inbox;
-    case "leads":
-      return i18n.nav.leads;
-    case "companies":
-      return i18n.nav.companies;
-    case "deals":
-      return i18n.nav.deals;
-    case "tasks":
-      return i18n.nav.tasks;
-    case "metrics":
-      return i18n.nav.metrics;
-    case "import":
-      return i18n.nav.import;
-    case "settings":
-      return i18n.nav.settings;
-  }
+  return i18n.nav[key];
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const lang = useLeadsStore((s) => s.settings.language);
+  const plugins = useLeadsStore((s) => mergePlugins(s.settings.plugins));
   const unread = useLeadsStore((s) =>
     s.threads.reduce((n, th) => n + (th.unread || 0), 0)
   );
   const i18n = t(lang);
 
+  const crmNav = navPlugins(plugins).filter((p) => p.group === "crm");
+  const systemNav = navPlugins(plugins).filter((p) => p.group === "system");
+
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
     return pathname === href || pathname.startsWith(href + "/");
   }
+
+  // Redirect if current route belongs to a disabled plugin
+  useEffect(() => {
+    const map: { prefix: string; id: PluginId }[] = [
+      { prefix: "/app/inbox", id: "inbox" },
+      { prefix: "/app/chat", id: "inbox" },
+      { prefix: "/app/leads", id: "leads" },
+      { prefix: "/app/companies", id: "companies" },
+      { prefix: "/app/deals", id: "deals" },
+      { prefix: "/app/tasks", id: "tasks" },
+      { prefix: "/app/metrics", id: "metrics" },
+      { prefix: "/app/import", id: "import" },
+    ];
+    for (const m of map) {
+      if (pathname.startsWith(m.prefix) && !isPluginEnabled(plugins, m.id)) {
+        router.replace("/app");
+        break;
+      }
+    }
+  }, [pathname, plugins, router]);
 
   return (
     <SidebarProvider>
@@ -102,13 +110,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 render={<Link href="/" />}
                 tooltip={i18n.brand}
               >
-                <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-300">
-                  <Sparkles className="size-4" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-[#266df0] text-white">
+                  <LayoutDashboard className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{i18n.brand}</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    CRM · ML Demo
+                    CRM · plugins
                   </span>
                 </div>
               </SidebarMenuButton>
@@ -117,50 +125,89 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>CRM</SidebarGroupLabel>
+            <SidebarGroupLabel>Overview</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {mainLinks.map(({ href, icon: Icon, key, exact }) => (
-                  <SidebarMenuItem key={href}>
-                    <SidebarMenuButton
-                      isActive={isActive(href, exact)}
-                      tooltip={navLabel(i18n, key)}
-                      render={<Link href={href} />}
-                    >
-                      <Icon />
-                      <span>{navLabel(i18n, key)}</span>
-                    </SidebarMenuButton>
-                    {key === "inbox" && unread > 0 ? (
-                      <SidebarMenuBadge>
-                        <Badge
-                          variant="default"
-                          className="h-5 min-w-5 justify-center px-1 text-[10px]"
-                        >
-                          {unread}
-                        </Badge>
-                      </SidebarMenuBadge>
-                    ) : null}
-                  </SidebarMenuItem>
-                ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={isActive("/app", true)}
+                    tooltip={i18n.nav.dashboard}
+                    render={<Link href="/app" />}
+                  >
+                    <LayoutDashboard />
+                    <span>{i18n.nav.dashboard}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+
+          {crmNav.length > 0 && (
+            <SidebarGroup>
+              <SidebarGroupLabel>CRM</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {crmNav.map((p) => {
+                    const Icon = ICONS[p.id] || Users;
+                    const label = pluginNavLabel(i18n, p.navKey!);
+                    return (
+                      <SidebarMenuItem key={p.id}>
+                        <SidebarMenuButton
+                          isActive={isActive(p.href!)}
+                          tooltip={label}
+                          render={<Link href={p.href!} />}
+                        >
+                          <Icon />
+                          <span>{label}</span>
+                        </SidebarMenuButton>
+                        {p.id === "inbox" && unread > 0 ? (
+                          <SidebarMenuBadge>
+                            <Badge
+                              variant="default"
+                              className="h-5 min-w-5 justify-center px-1 text-[10px]"
+                            >
+                              {unread}
+                            </Badge>
+                          </SidebarMenuBadge>
+                        ) : null}
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
+
           <SidebarGroup>
             <SidebarGroupLabel>System</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {secondaryLinks.map(({ href, icon: Icon, key }) => (
-                  <SidebarMenuItem key={href}>
-                    <SidebarMenuButton
-                      isActive={isActive(href)}
-                      tooltip={navLabel(i18n, key)}
-                      render={<Link href={href} />}
-                    >
-                      <Icon />
-                      <span>{navLabel(i18n, key)}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {systemNav.map((p) => {
+                  const Icon = ICONS[p.id] || Upload;
+                  const label = pluginNavLabel(i18n, p.navKey!);
+                  return (
+                    <SidebarMenuItem key={p.id}>
+                      <SidebarMenuButton
+                        isActive={isActive(p.href!)}
+                        tooltip={label}
+                        render={<Link href={p.href!} />}
+                      >
+                        <Icon />
+                        <span>{label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={isActive("/app/settings")}
+                    tooltip={i18n.nav.settings}
+                    render={<Link href="/app/settings" />}
+                  >
+                    <Settings />
+                    <span>{i18n.nav.settings}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -176,12 +223,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 px-4 backdrop-blur">
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-white/90 px-4 backdrop-blur">
           <SidebarTrigger />
           <div className="flex-1" />
           <LanguageToggle className="flex gap-1 md:hidden" />
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 bg-white p-4 md:p-6 lg:p-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
