@@ -158,3 +158,54 @@
 ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.38 0.03 260);
 }
+
+
+/* Hero grid + soft gradient backdrop */
+.hero-grid {
+  background-image:
+    linear-gradient(to right, oklch(0.62 0.22 265 / 6%) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.62 0.22 265 / 6%) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 20%, transparent 75%);
+}
+
+.hero-glow {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.55 0.22 265 / 35%), transparent 60%),
+    radial-gradient(ellipse 40% 30% at 85% 20%, oklch(0.65 0.18 200 / 18%), transparent 50%),
+    radial-gradient(ellipse 35% 25% at 10% 30%, oklch(0.6 0.2 300 / 12%), transparent 50%);
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes soft-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+.animate-fade-up-delay-1 { animation: fade-up 0.6s ease-out 0.08s both; }
+.animate-fade-up-delay-2 { animation: fade-up 0.6s ease-out 0.16s both; }
+.animate-fade-up-delay-3 { animation: fade-up 0.6s ease-out 0.24s both; }
+
+.pricing-featured {
+  position: relative;
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 1px oklch(0.62 0.22 265 / 45%),
+    0 20px 50px -20px oklch(0.55 0.22 265 / 55%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-up-delay-1,
+  .animate-fade-up-delay-2,
+  .animate-fade-up-delay-3 {
+    animation: none;
+  }
+}

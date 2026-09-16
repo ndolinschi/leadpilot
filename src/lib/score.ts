@@ -26,7 +26,7 @@ const WEIGHTS = {
     inbound: 0.72, webinar: 0.48, referral: 0.85, linkedin: 0.25, outbound: -0.15, cold: -0.55,
   } as Record<string, number>,
   industry: {
-    SaaS: 0.35, FinTech: 0.28, Healthcare: 0.12, Logistics: 0.05, Retail: -0.08, Manufacturing: -0.12, Other: 0,
+    SaaS: 0.35, FinTech: 0.28, Healthcare: 0.12, Logistics: 0.05, Retail: -0.08, Manufacturing: -0.12, EdTech: 0.15, Cybersecurity: 0.32, Other: 0,
   } as Record<string, number>,
   countryTier: 0.18,
 } as const;

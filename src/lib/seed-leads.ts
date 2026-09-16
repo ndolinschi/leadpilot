@@ -21,6 +21,8 @@ const COMPANIES = [
   "Lumen Dental", "Parcelwise", "SynthoBank", "Relay HQ", "Pinecrest Soft",
   "Driftline", "Helix Inventory", "NovaGrid", "SummitOps", "Kite Metrics",
   "Blueform", "Asterisk Health", "CargoNest", "Finch Ledger", "Ripple Retail",
+  "Shieldcraft", "Campusly", "ForgeWorks", "MediOrbit", "PayNest",
+  "Routewise", "Learnloop", "Vaultspan", "Cartwright Co", "Atlas Clinics",
 ];
 const TITLES: { title: string; seniority: Seniority }[] = [
   { title: "CEO", seniority: "exec" },
@@ -36,7 +38,7 @@ const TITLES: { title: string; seniority: Seniority }[] = [
   { title: "SDR", seniority: "junior" },
   { title: "Business Development Rep", seniority: "junior" },
 ];
-const INDUSTRIES = ["SaaS", "FinTech", "Healthcare", "Logistics", "Retail", "Manufacturing", "Other"];
+const INDUSTRIES = ["SaaS", "FinTech", "Healthcare", "Logistics", "Retail", "Manufacturing", "EdTech", "Cybersecurity", "Other"];
 const SOURCES = ["inbound", "outbound", "webinar", "referral", "linkedin", "cold"];
 const COUNTRIES = ["US", "UK", "DE", "NL", "MD", "RO", "UA", "PL", "FR", "CA", "AU", "SE", "SG", "CH"];
 const SIZES = [8, 15, 25, 40, 60, 120, 250, 480, 900, 2000, 5000];
@@ -116,4 +118,4 @@ export function createSeedLeads(count = 64): Lead[] {
   return leads.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 }
 
-export const SEED_LEADS = createSeedLeads(64);
+export const SEED_LEADS = createSeedLeads(72);

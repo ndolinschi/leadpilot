@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
+import { factorDetailFromLabel, factorLabel } from "@/lib/factor-labels";
 import type { Channel, Outcome } from "@/lib/types";
 import { ChannelBadge } from "@/components/channel-badge";
 import { ScoreBar } from "@/components/score-bar";
@@ -32,6 +33,7 @@ export default function LeadDetailPage({
   const lang = useLeadsStore((s) => s.settings.language);
   const settings = useLeadsStore((s) => s.settings);
   const lead = useLeadsStore((s) => s.leads.find((l) => l.id === id));
+  const hydrated = useLeadsStore((s) => s.hydrated);
   const updateLeadMessage = useLeadsStore((s) => s.updateLeadMessage);
   const updateOutcome = useLeadsStore((s) => s.updateOutcome);
   const regenerateMessage = useLeadsStore((s) => s.regenerateMessage);
@@ -39,11 +41,32 @@ export default function LeadDetailPage({
   const [busy, setBusy] = useState(false);
 
   const factors = useMemo(() => {
-    const f = lead?.factors ?? [];
+    const f = (lead?.factors ?? []).map((x) => ({
+      ...x,
+      displayLabel: factorLabel(
+        x.feature,
+        x.label,
+        lang,
+        factorDetailFromLabel(x.label)
+      ),
+    }));
     const up = f.filter((x) => x.direction === "up");
     const down = f.filter((x) => x.direction === "down");
     return { up, down, max: Math.max(1, ...f.map((x) => Math.abs(x.contribution))) };
-  }, [lead]);
+  }, [lead, lang]);
+
+  if (!hydrated) {
+    return (
+      <div className="space-y-4" aria-busy="true">
+        <div className="h-8 w-32 animate-pulse rounded bg-muted" />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="h-80 animate-pulse rounded-xl bg-muted/60" />
+          <div className="h-80 animate-pulse rounded-xl bg-muted/60 lg:col-span-2" />
+        </div>
+        <p className="text-sm text-muted-foreground">{i18n.app.loading}</p>
+      </div>
+    );
+  }
 
   if (!lead) {
     return (
@@ -52,7 +75,7 @@ export default function LeadDetailPage({
           <ArrowLeft className="size-4" />
           {i18n.nav.dashboard}
         </Button>
-        <p className="text-muted-foreground">Lead not found.</p>
+        <p className="text-muted-foreground">{i18n.detail.notFound}</p>
       </div>
     );
   }
@@ -76,35 +99,45 @@ export default function LeadDetailPage({
         updateLeadMessage(current.id, data.message);
         toast.success(
           data.provider === "template"
-            ? "Message refreshed (template)"
-            : `Message refreshed (${data.provider})`
+            ? i18n.detail.refreshedTemplate
+            : `${i18n.detail.refreshedProvider} (${data.provider})`
         );
       } else {
         regenerateMessage(current.id);
-        toast.message("Used local template");
+        toast.message(i18n.detail.refreshedTemplate);
       }
     } catch {
       regenerateMessage(current.id);
-      toast.message("Used local template");
+      toast.message(i18n.detail.refreshedTemplate);
     } finally {
       setBusy(false);
     }
   }
 
   async function onCopy() {
-    await navigator.clipboard.writeText(current.message || "");
-    toast.success(i18n.detail.copied);
+    try {
+      await navigator.clipboard.writeText(current.message || "");
+      toast.success(i18n.detail.copied);
+    } catch {
+      toast.error(i18n.detail.copyFailed);
+    }
   }
 
   function mark(outcome: Outcome) {
     updateOutcome(current.id, outcome);
-    toast.success(`Outcome: ${outcome?.replace("_", " ")}`);
+    const label = outcome?.replace("_", " ") ?? "";
+    toast.success(`${i18n.detail.outcomeMarked}: ${label}`);
   }
 
   const channelEntries = Object.entries(lead.channelProbs || {}) as [
     Channel,
     number,
   ][];
+
+  const engagement = i18n.detail.opensVisits.replace(
+    "{visits}",
+    String(lead.siteVisits)
+  );
 
   return (
     <div className="space-y-6">
@@ -133,25 +166,29 @@ export default function LeadDetailPage({
               </div>
             </div>
             <Separator />
-            <Row label="Email" value={lead.email} />
-            <Row label="Industry" value={lead.industry} />
-            <Row label="Size" value={String(lead.companySize)} />
-            <Row label="Source" value={lead.source} />
-            <Row label="Country" value={lead.country} />
-            <Row label="Seniority" value={lead.seniority} />
-            <Row label="Last touch" value={`${lead.lastTouchDays}d`} />
+            <Row label={i18n.detail.email} value={lead.email} />
+            <Row label={i18n.detail.industry} value={lead.industry} />
+            <Row label={i18n.detail.size} value={String(lead.companySize)} />
+            <Row label={i18n.app.source} value={lead.source} />
+            <Row label={i18n.detail.country} value={lead.country} />
+            <Row label={i18n.detail.seniority} value={lead.seniority} />
+            <Row label={i18n.detail.lastTouch} value={`${lead.lastTouchDays}d`} />
             <Row
-              label="Engagement"
-              value={`${lead.emailsOpened}/${lead.emailsSent} opens · ${lead.siteVisits} visits`}
+              label={i18n.detail.engagement}
+              value={`${lead.emailsOpened}/${lead.emailsSent} ${engagement}`}
             />
             <Row
-              label="Demo"
-              value={lead.demoRequested ? "Requested" : "No"}
+              label={i18n.detail.demo}
+              value={lead.demoRequested ? i18n.detail.demoYes : i18n.detail.demoNo}
             />
             <Row
-              label="Budget signal"
+              label={i18n.detail.budget}
               value={`${Math.round(lead.budgetSignal * 100)}%`}
             />
+            {lead.phone && <Row label={i18n.detail.phone} value={lead.phone} />}
+            {lead.linkedin && (
+              <Row label={i18n.detail.linkedin} value={lead.linkedin.replace("https://", "")} />
+            )}
           </CardContent>
         </Card>
 
@@ -242,6 +279,9 @@ export default function LeadDetailPage({
           <Card className="border-border/60 bg-card/70">
             <CardHeader>
               <CardTitle className="text-base">{i18n.detail.explain}</CardTitle>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {i18n.detail.explainHint}
+              </p>
             </CardHeader>
             <CardContent className="space-y-5">
               <FactorGroup
@@ -300,7 +340,9 @@ function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className="text-right font-medium capitalize">{value}</span>
+      <span className="max-w-[60%] truncate text-right font-medium capitalize" title={value}>
+        {value}
+      </span>
     </div>
   );
 }
@@ -312,7 +354,7 @@ function FactorGroup({
   tone,
 }: {
   title: string;
-  items: { label: string; contribution: number }[];
+  items: { displayLabel: string; contribution: number }[];
   max: number;
   tone: "up" | "down";
 }) {
@@ -326,9 +368,9 @@ function FactorGroup({
         {items.map((f) => {
           const pct = (Math.abs(f.contribution) / max) * 100;
           return (
-            <div key={f.label} className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span>{f.label}</span>
+            <div key={f.displayLabel} className="space-y-1">
+              <div className="flex justify-between gap-3 text-sm">
+                <span>{f.displayLabel}</span>
                 <span
                   className={
                     tone === "up"
@@ -344,8 +386,8 @@ function FactorGroup({
                 <div
                   className={
                     tone === "up"
-                      ? "h-full rounded-full bg-emerald-400/80"
-                      : "h-full rounded-full bg-rose-400/80"
+                      ? "h-full rounded-full bg-emerald-400/80 transition-all"
+                      : "h-full rounded-full bg-rose-400/80 transition-all"
                   }
                   style={{ width: `${pct}%` }}
                 />

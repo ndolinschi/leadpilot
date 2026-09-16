@@ -28,7 +28,7 @@ export default function SettingsPage() {
 
   function save() {
     rescoreAll();
-    toast.success(lang === "ru" ? "Сохранено" : "Settings saved");
+    toast.success(S.saved);
   }
 
   return (
@@ -98,7 +98,7 @@ export default function SettingsPage() {
               variant="outline"
               onClick={() => {
                 resetDemo();
-                toast.message(lang === "ru" ? "Демо сброшено" : "Demo reset");
+                toast.message(S.resetDone);
               }}
             >
               {S.reset}

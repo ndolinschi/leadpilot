@@ -82,7 +82,7 @@ export const useLeadsStore = create<State>()(
       rescoreAll: () => set((s) => ({ leads: withMessages(s.leads, s.settings) })),
     }),
     {
-      name: "leadpilot-v1",
+      name: "leadpilot-v2",
       partialize: (s) => ({ leads: s.leads, settings: s.settings }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true);
