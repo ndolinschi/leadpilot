@@ -1,6 +1,6 @@
 # Grok Build — final monorepo + Supabase pass
 
-**SHA:** (see git after commit; parent was `2789b62e21fc21dfd70d561895383bd9b76bfc8a`)  
+**SHA:** `49af8067e745abeff3d89db4282614f68922b34e`  
 **Date:** 2026-09-17  
 **Supabase:** `xxyhztviztdhvjzdfdmb` (anon in `.env.local`; dual-mode repo: local Demo sample ↔ workspace)
 
