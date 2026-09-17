@@ -312,7 +312,7 @@ const en = {
   },
   developersPage: {
     title: "Developers & Public API",
-    subtitle: "Integrate LeadPilot with external CRM, ERP, telephony, and custom automation workflows.",
+    subtitle: "Integrate LeadPilot with external desks, ERP, telephony, and custom automation workflows.",
     openapiSpec: "Download OpenAPI 3.0 Spec",
     authSection: "Authentication",
     authDesc: "Pass your workspace API key in either the Authorization header or x-api-key header:",
@@ -324,7 +324,7 @@ const en = {
   },
   metricsPage: {
     title: "Model metrics",
-    subtitle: "Precomputed offline evaluation on synthetic CRM holdout (not live production telemetry).",
+    subtitle: "Precomputed offline evaluation on a synthetic holdout (not live production telemetry).",
     auc: "ROC AUC",
     lift: "Lift at top 20%",
     baseline: "vs chronological baseline",
@@ -701,7 +701,7 @@ const ru: Dict = {
   },
   developersPage: {
     title: "Разработчикам и Публичный API",
-    subtitle: "Интеграция LeadPilot с внешними CRM, телефонией, сайтами и кастомными скриптами автоматизации.",
+    subtitle: "Интеграция LeadPilot с внешними системами, телефонией, сайтами и скриптами автоматизации.",
     openapiSpec: "Скачать OpenAPI 3.0 JSON",
     authSection: "Авторизация",
     authDesc: "Передавайте API-ключ рабочего пространства в заголовке Authorization или x-api-key:",
@@ -713,7 +713,7 @@ const ru: Dict = {
   },
   metricsPage: {
     title: "Метрики модели",
-    subtitle: "Превычисленные офлайн-метрики на synthetic CRM holdout (не live-телеметрия).",
+    subtitle: "Превычисленные офлайн-метрики на синтетической выборке (не live-телеметрия).",
     auc: "ROC AUC",
     lift: "Lift на топ-20%",
     baseline: "vs хронологический baseline",

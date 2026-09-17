@@ -10,11 +10,8 @@ import {
   Share2,
   FileSpreadsheet,
   Mail,
-  Check,
-  ExternalLink,
   Code2,
   Copy,
-  Zap,
   Play,
   Settings2,
   FileCode,
@@ -23,6 +20,7 @@ import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
 import { BUILTIN_CONNECTORS, validateCustomManifest } from "@/lib/connectors/registry";
 import type { ConnectorManifest } from "@/lib/connectors/types";
+import type { ConnectorState } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -32,6 +30,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ButtonLink } from "@/components/button-link";
+
+const EMPTY_CONNECTORS: Record<string, ConnectorState> = {};
+const EMPTY_CUSTOM: ConnectorManifest[] = [];
 
 const ICON_MAP: Record<string, typeof Store> = {
   csv: FileSpreadsheet,
@@ -43,8 +44,8 @@ const ICON_MAP: Record<string, typeof Store> = {
 
 export default function MarketplacePage() {
   const lang = useLeadsStore((s) => s.settings.language);
-  const connectorsConfig = useLeadsStore((s) => s.settings.connectors) || {};
-  const customConnectors = useLeadsStore((s) => s.customConnectors) || [];
+  const connectorsConfig = useLeadsStore((s) => s.settings.connectors) ?? EMPTY_CONNECTORS;
+  const customConnectors = useLeadsStore((s) => s.customConnectors) ?? EMPTY_CUSTOM;
   const toggleConnector = useLeadsStore((s) => s.toggleConnector);
   const updateConnectorConfig = useLeadsStore((s) => s.updateConnectorConfig);
   const registerConnector = useLeadsStore((s) => s.registerConnector);
@@ -135,8 +136,28 @@ export default function MarketplacePage() {
           },
         };
       } else if (connector.id === "facebook") {
-        endpoint = "/api/v1/webhooks/telegram"; // or generic endpoint
-        payload = { isTest: true };
+        endpoint = "/api/v1/webhooks/facebook";
+        payload = {
+          isTest: true,
+          object: "page",
+          entry: [
+            {
+              id: "page_md_demo",
+              time: Date.now(),
+              messaging: [
+                {
+                  sender: { id: `fb_${Math.floor(Math.random() * 9000)}` },
+                  message: {
+                    mid: `m_${Date.now()}`,
+                    text: isRu
+                      ? "Здравствуйте, заявка с Facebook Lead Ads — нужна консультация."
+                      : "Hello from Facebook Lead Ads — we need a consultation.",
+                  },
+                },
+              ],
+            },
+          ],
+        };
       }
 
       const res = await fetch(endpoint || `/api/v1/webhooks/${connector.id}`, {
@@ -349,8 +370,10 @@ export default function MarketplacePage() {
                       <span>{isRu ? "Копировать" : "Copy"}</span>
                     </Button>
                   </div>
-                  <code className="block rounded bg-white px-2 py-1 font-mono text-[11px] text-blue-900 border border-blue-100">
-                    {selectedConnector.webhookPath}
+                  <code className="block break-all rounded bg-white px-2 py-1 font-mono text-[11px] text-blue-900 border border-blue-100">
+                    {typeof window !== "undefined"
+                      ? `${window.location.origin}${selectedConnector.webhookPath}`
+                      : selectedConnector.webhookPath}
                   </code>
                 </div>
               )}
@@ -436,7 +459,7 @@ export default function MarketplacePage() {
               <Label className="text-xs">{M.pasteJson}</Label>
               <Textarea
                 rows={7}
-                placeholder='{\n  "id": "custom-crm",\n  "name": "Custom CRM Ingest",\n  "brand": "Make / Zapier",\n  "version": "1.0.0",\n  "capabilities": ["inbound_leads"]\n}'
+                placeholder='{\n  "id": "custom-desk",\n  "name": "Custom Desk Ingest",\n  "brand": "Make / Zapier",\n  "version": "1.0.0",\n  "capabilities": ["inbound_leads"]\n}'
                 value={manifestJson}
                 onChange={(e) => setManifestJson(e.target.value)}
                 className="font-mono text-xs"

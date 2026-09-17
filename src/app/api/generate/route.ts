@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       companyName: "LeadPilot",
       voice: "Consultative, concise, value-first.",
       language: "en",
-      productPitch: "ML priority, best channel, personalized first-touch in one CRM inbox.",
+      productPitch: "ML priority, best channel, personalized first-touch in one inbox.",
     }) as CompanySettings;
 
     if (!lead?.name) {

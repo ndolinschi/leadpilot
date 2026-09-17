@@ -9,9 +9,6 @@ import {
   Key,
   ShieldCheck,
   Server,
-  Zap,
-  ExternalLink,
-  Check,
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
@@ -20,6 +17,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ButtonLink } from "@/components/button-link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { ApiKeyRecord } from "@/lib/types";
+
+const EMPTY_API_KEYS: ApiKeyRecord[] = [];
 
 interface ApiEndpointDoc {
   method: "GET" | "POST";
@@ -32,7 +32,7 @@ interface ApiEndpointDoc {
 
 export default function DevelopersPage() {
   const lang = useLeadsStore((s) => s.settings.language);
-  const apiKeys = useLeadsStore((s) => s.settings.apiKeys) || [];
+  const apiKeys = useLeadsStore((s) => s.settings.apiKeys) ?? EMPTY_API_KEYS;
   const i18n = t(lang);
   const D = i18n.developersPage;
   const isRu = lang === "ru";
@@ -84,7 +84,7 @@ export default function DevelopersPage() {
       method: "POST",
       path: "/api/v1/webhooks/telegram",
       title: isRu ? "Telegram Webhook" : "Telegram Inbound Webhook",
-      desc: isRu ? "Принимает обновления от Telegram Bot API, создаёт лида в очереди и открывает переписку." : "Processes raw Telegram updates, verifies auth tokens, and attaches inbound messages to CRM threads.",
+      desc: isRu ? "Принимает обновления от Telegram Bot API, создаёт лида в очереди и открывает переписку." : "Processes raw Telegram updates, verifies auth tokens, and attaches inbound messages to conversation threads.",
       curl: `curl -X POST https://leadpilot.io/api/v1/webhooks/telegram \\\n  -H "Content-Type: application/json" \\\n  -H "x-leadpilot-test: true" \\\n  -d '{\n    "update_id": 9991,\n    "isTest": true,\n    "message": {\n      "message_id": 102,\n      "from": { "id": 10293, "first_name": "Dumitru", "username": "dumitru_md" },\n      "text": "Hello, need pricing for our clinic support desk."\n    }\n  }'`,
       response: `{\n  "ok": true,\n  "statusCode": 200,\n  "message": "Sample Telegram update verified and processed through connector handler",\n  "threadId": "th_tg_10293"\n}`,
     },
@@ -95,6 +95,16 @@ export default function DevelopersPage() {
       desc: isRu ? "Принимает вебхуки от Viber Partners API, связывает диалоги с очередью оператора." : "Receives Viber bot messages, verifies signatures, and pushes inquiries to unified Conversations.",
       curl: `curl -X POST https://leadpilot.io/api/v1/webhooks/viber \\\n  -H "Content-Type: application/json" \\\n  -H "x-leadpilot-test: true" \\\n  -d '{\n    "event": "message",\n    "isTest": true,\n    "sender": { "id": "viber_123", "name": "Maria Rusu" },\n    "message": { "type": "text", "text": "Buna ziua, avem o intrebare legata de integrare." }\n  }'`,
       response: `{\n  "ok": true,\n  "statusCode": 200,\n  "message": "Sample Viber update verified and processed through connector handler",\n  "threadId": "th_vb_viber_123"\n}`,
+    },
+    {
+      method: "POST",
+      path: "/api/v1/webhooks/facebook",
+      title: isRu ? "Facebook Webhook" : "Facebook Lead Ads Webhook",
+      desc: isRu
+        ? "Принимает события Meta Lead Ads и Messenger, создаёт лида в очереди."
+        : "Processes Meta Lead Ads and Messenger updates into the operator queue.",
+      curl: `curl -X POST https://leadpilot.io/api/v1/webhooks/facebook \\\n  -H "Content-Type: application/json" \\\n  -H "x-leadpilot-test: true" \\\n  -d '{\n    "object": "page",\n    "isTest": true,\n    "entry": [{ "messaging": [{ "sender": { "id": "fb_123" }, "message": { "mid": "m1", "text": "Need a clinic demo." } }] }]\n  }'`,
+      response: `{\n  "ok": true,\n  "statusCode": 200,\n  "message": "Sample Facebook lead verified and processed through connector handler",\n  "threadId": "th_fb_fb_123"\n}`,
     },
   ];
 

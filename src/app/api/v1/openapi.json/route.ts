@@ -189,6 +189,17 @@ export async function GET() {
           },
         },
       },
+      "/webhooks/facebook": {
+        post: {
+          summary: "Facebook Lead Ads Webhook Endpoint",
+          security: [],
+          description: "Receives Meta Lead Ads and Messenger payloads and creates inbound leads & messages.",
+          responses: {
+            200: { description: "Webhook verified and processed" },
+            503: { description: "Connector unconfigured — includes setup instructions" },
+          },
+        },
+      },
     },
   };
 

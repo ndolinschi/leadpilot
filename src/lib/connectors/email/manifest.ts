@@ -7,8 +7,8 @@ export const emailManifest: ConnectorManifest = {
   version: "1.1.0",
   channel: "email",
   category: "channels",
-  description: "Direct SMTP/IMAP and transactional email inbound sync. Automatically links emails to CRM accounts and tracks opens.",
-  descriptionRu: "Прямая синхронизация по SMTP/IMAP. Автоматически привязывает входящие письма к аккаунтам CRM и отслеживает открытия.",
+  description: "Direct SMTP/IMAP and transactional email inbound sync. Automatically links emails to company accounts and tracks opens.",
+  descriptionRu: "Прямая синхронизация по SMTP/IMAP. Автоматически привязывает входящие письма к компаниям и отслеживает открытия.",
   capabilities: ["inbound_leads", "inbound_messages", "outbound_messages"],
   authType: "api_key",
   configSchema: [

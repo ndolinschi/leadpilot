@@ -47,7 +47,7 @@ const defaultSettings: CompanySettings = {
   voice: "Consultative, concise, value-first. No hype. Mention one concrete outcome.",
   language: "en",
   productPitch:
-    "Stop FIFO queues and tool-switching: ML priority, best channel, personalized first-touch — in one CRM inbox.",
+    "Stop FIFO queues and tool-switching: ML priority, best channel, personalized first-touch — in one inbox.",
   plugins: { ...DEFAULT_PLUGINS },
   connectors: defaultConnectors,
   apiKeys: defaultApiKeys,

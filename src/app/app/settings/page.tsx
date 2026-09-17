@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Key,
@@ -42,11 +42,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ButtonLink } from "@/components/button-link";
+import type { ApiKeyRecord } from "@/lib/types";
+
+const EMPTY_API_KEYS: ApiKeyRecord[] = [];
 
 export default function SettingsPage() {
   const lang = useLeadsStore((s) => s.settings.language);
   const settings = useLeadsStore((s) => s.settings);
-  const apiKeys = useLeadsStore((s) => s.settings.apiKeys) || [];
+  const apiKeys = useLeadsStore((s) => s.settings.apiKeys) ?? EMPTY_API_KEYS;
   const updateSettings = useLeadsStore((s) => s.updateSettings);
   const addApiKey = useLeadsStore((s) => s.addApiKey);
   const revokeApiKey = useLeadsStore((s) => s.revokeApiKey);

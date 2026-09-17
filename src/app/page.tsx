@@ -11,16 +11,10 @@ import {
   Upload,
   Kanban,
   Workflow,
-  Megaphone,
   Lock,
   Menu,
   Store,
   Code2,
-  Bot,
-  Send,
-  Building2,
-  Activity,
-  CreditCard,
 } from "lucide-react";
 import { ButtonLink } from "@/components/button-link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -198,8 +192,11 @@ export default function LandingPage() {
             <a href="#modules" className="transition-colors hover:text-zinc-900">{i18n.nav.modules}</a>
             <a href="#metrics" className="transition-colors hover:text-zinc-900">{i18n.nav.metrics}</a>
             <a href="#pricing" className="transition-colors hover:text-zinc-900">{i18n.nav.pricing}</a>
+            <ButtonLink href="/app/marketplace" variant="ghost" size="sm" className="text-zinc-600 hover:text-zinc-900">
+              {i18n.nav.marketplace}
+            </ButtonLink>
             <ButtonLink href="/app/developers" variant="ghost" size="sm" className="text-zinc-600 hover:text-zinc-900">
-              API
+              {i18n.nav.developers}
             </ButtonLink>
           </nav>
 
@@ -262,11 +259,21 @@ export default function LandingPage() {
                       {i18n.nav.pricing}
                     </a>
                     <ButtonLink
-                      href="/app/developers"
+                      href="/app/marketplace"
                       variant="outline"
                       size="sm"
                       onClick={() => setMobileMenuOpen(false)}
                       className="mt-2 inline-flex items-center justify-center gap-1.5"
+                    >
+                      <Store className="size-3.5" />
+                      <span>{i18n.nav.marketplace}</span>
+                    </ButtonLink>
+                    <ButtonLink
+                      href="/app/developers"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="inline-flex items-center justify-center gap-1.5"
                     >
                       <Code2 className="size-3.5" />
                       <span>{i18n.nav.developers}</span>
