@@ -14,6 +14,7 @@ import {
   Check,
   ShieldCheck,
   AlertCircle,
+  Puzzle,
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
@@ -42,7 +43,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ButtonLink } from "@/components/button-link";
-import type { ApiKeyRecord } from "@/lib/types";
+import type { ApiKeyRecord, PluginId } from "@/lib/types";
+import { listPlugins, isPluginEnabled, mergePlugins } from "@/lib/plugins";
+import { Switch } from "@/components/ui/switch";
 
 const EMPTY_API_KEYS: ApiKeyRecord[] = [];
 
@@ -54,6 +57,8 @@ export default function SettingsPage() {
   const addApiKey = useLeadsStore((s) => s.addApiKey);
   const revokeApiKey = useLeadsStore((s) => s.revokeApiKey);
   const resetDemo = useLeadsStore((s) => s.resetDemo);
+  const setPluginEnabled = useLeadsStore((s) => s.setPluginEnabled);
+  const plugins = useLeadsStore((s) => s.settings.plugins);
   const rescoreAll = useLeadsStore((s) => s.rescoreAll);
   const i18n = t(lang);
   const S = i18n.settingsPage;
@@ -134,7 +139,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="apiKeys" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 max-w-2xl">
           <TabsTrigger value="apiKeys" className="inline-flex items-center gap-1.5">
             <Key className="size-3.5" />
             <span>{S.tabApiKeys}</span>
@@ -142,6 +147,10 @@ export default function SettingsPage() {
           <TabsTrigger value="general" className="inline-flex items-center gap-1.5">
             <Sliders className="size-3.5" />
             <span>{S.tabGeneral}</span>
+          </TabsTrigger>
+          <TabsTrigger value="plugins" className="inline-flex items-center gap-1.5">
+            <Puzzle className="size-3.5" />
+            <span>{isRu ? "Плагины" : "Plugins"}</span>
           </TabsTrigger>
           <TabsTrigger value="billing" className="inline-flex items-center gap-1.5">
             <CreditCard className="size-3.5" />
@@ -294,6 +303,84 @@ export default function SettingsPage() {
                   {S.reset}
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+
+        {/* Tab: WordPress-style desk plugins */}
+        <TabsContent value="plugins" className="mt-6 space-y-6">
+          <Card className="border-zinc-200 bg-white shadow-none">
+            <CardHeader>
+              <CardTitle className="text-base">
+                {isRu ? "Плагины рабочего стола" : "Desk plugins"}
+              </CardTitle>
+              <CardDescription>
+                {isRu
+                  ? "Активируйте и деактивируйте модули как в WordPress. Неактивные скрывают маршруты и API-поверхности."
+                  : "Activate and deactivate modules like WordPress. Inactive plugins hide routes and API surfaces."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {listPlugins().map((plugin) => {
+                const enabled = isPluginEnabled(mergePlugins(plugins), plugin.id as PluginId);
+                return (
+                  <div
+                    key={plugin.id}
+                    className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-zinc-900">{plugin.name}</p>
+                        <Badge variant="outline" className="text-[10px]">
+                          {enabled
+                            ? isRu
+                              ? "Активен"
+                              : "Active"
+                            : isRu
+                              ? "Неактивен"
+                              : "Inactive"}
+                        </Badge>
+                        {plugin.locked && (
+                          <Badge className="bg-zinc-800 text-white text-[10px]">
+                            {isRu ? "Обязательный" : "Required"}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-zinc-600 leading-relaxed">
+                        {isRu ? plugin.descriptionRu : plugin.descriptionEn}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={enabled}
+                      disabled={Boolean(plugin.locked && enabled)}
+                      onCheckedChange={(checked) => {
+                        try {
+                          setPluginEnabled(plugin.id as PluginId, checked);
+                          toast.success(
+                            checked
+                              ? isRu
+                                ? `${plugin.name} активирован`
+                                : `${plugin.name} activated`
+                              : isRu
+                                ? `${plugin.name} деактивирован`
+                                : `${plugin.name} deactivated`
+                          );
+                        } catch (err) {
+                          toast.error(
+                            err instanceof Error
+                              ? err.message
+                              : isRu
+                                ? "Не удалось изменить плагин"
+                                : "Could not update plugin"
+                          );
+                        }
+                      }}
+                      aria-label={`Toggle ${plugin.name}`}
+                    />
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         </TabsContent>

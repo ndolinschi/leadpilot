@@ -21,8 +21,11 @@ import { CRM_SEED } from "@/lib/seed-crm";
 import { applyScore } from "@/lib/score";
 import { generateMessage } from "@/lib/messages";
 import { parseLeadsCsv } from "@/lib/csv";
-import { DEFAULT_PLUGINS, mergePlugins } from "@/lib/plugins";
+import { DEFAULT_PLUGINS, mergePlugins, type PluginId } from "@/lib/plugins";
+import { activatePlugin, deactivatePlugin } from "@/lib/plugins/wp-activate";
+import { activateConnector, deactivateConnector } from "@/lib/connectors/registry";
 import type { ConnectorManifest } from "@/lib/connectors/types";
+import { LocalDeskRepository } from "@/lib/repo";
 
 const defaultConnectors: Record<string, ConnectorState> = {
   csv: { enabled: true, installed: true },
@@ -35,8 +38,8 @@ const defaultConnectors: Record<string, ConnectorState> = {
 const defaultApiKeys: ApiKeyRecord[] = [
   {
     id: "key_demo_01",
-    name: "Production Default Key",
-    prefix: "lp_live_e891b2...",
+    name: "Demo sample key",
+    prefix: "lp_demo_e891b2...",
     hashedKey: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     createdAt: new Date().toISOString(),
   },
@@ -93,6 +96,7 @@ type State = {
   addApiKey: (key: ApiKeyRecord) => void;
   revokeApiKey: (id: string) => void;
   toggleConnector: (id: string, enabled: boolean) => void;
+  setPluginEnabled: (id: PluginId, enabled: boolean) => void;
   updateConnectorConfig: (id: string, config: Record<string, string | boolean>) => void;
   registerConnector: (manifest: ConnectorManifest) => void;
   receiveWebhookLeadAndMessage: (lead: Lead, message?: ChatMessage) => { leadId: string; threadId: string };
@@ -167,7 +171,12 @@ export const useLeadsStore = create<State>()(
             apiKeys: (s.settings.apiKeys || []).filter((k) => k.id !== id),
           },
         })),
-      toggleConnector: (id, enabled) =>
+      toggleConnector: (id, enabled) => {
+        const workspaceId = "local-demo";
+        // Fire WordPress-style connector lifecycle hooks (real, not mocked)
+        void (enabled
+          ? activateConnector(workspaceId, id)
+          : deactivateConnector(workspaceId, id));
         set((s) => {
           const current = s.settings.connectors || defaultConnectors;
           const entry = current[id] || { installed: true, enabled: false };
@@ -176,11 +185,28 @@ export const useLeadsStore = create<State>()(
               ...s.settings,
               connectors: {
                 ...current,
-                [id]: { ...entry, enabled },
+                [id]: { ...entry, installed: true, enabled },
               },
             },
           };
-        }),
+        });
+      },
+      setPluginEnabled: (id, enabled) => {
+        // Persist via DeskRepository + wp_plugins lifecycle (local Demo sample today)
+        const repo = new LocalDeskRepository({
+          settings: get().settings,
+        });
+        void (enabled ? activatePlugin(repo, id) : deactivatePlugin(repo, id));
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            plugins: mergePlugins({
+              ...s.settings.plugins,
+              [id]: enabled,
+            }),
+          },
+        }));
+      },
       updateConnectorConfig: (id, config) =>
         set((s) => {
           const current = s.settings.connectors || defaultConnectors;
