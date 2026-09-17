@@ -4,6 +4,12 @@
 
 Diploma SaaS MVP: score every lead 0–100, pick the best channel, draft/send messages in a real chat UX, manage pipeline — in English and Russian.
 
+## Auth
+
+Visit `/login` for magic link or email+password. First login creates a real Supabase workspace + owner membership and seeds default plugins. Anonymous use keeps the labeled Demo sample.
+
+Public env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_DATA_BACKEND` — see `docs/SUPABASE.md`.
+
 ## Quick start
 
 ```bash

@@ -19,6 +19,7 @@
     "@leadpilot/core": "file:packages/core",
     "@leadpilot/scoring": "file:packages/scoring",
     "@shadcn/react": "^0.3.1",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "@tanstack/react-table": "^9.2.4",
     "class-variance-authority": "^0.7.1",

@@ -19,6 +19,7 @@ import {
   Megaphone,
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
+import { useAuthOptional } from "@/components/auth/auth-provider";
 import { t } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +61,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
   );
   const i18n = t(lang);
   const isRu = lang === "ru";
+  const auth = useAuthOptional();
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
@@ -337,9 +339,20 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800 text-[10px] font-medium">
-              {isRu ? "Демо-выборка" : "Demo sample"}
-            </Badge>
+            {auth?.usingSupabase && auth.workspace ? (
+              <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-800 text-[10px] font-medium max-w-[10rem] truncate">
+                {auth.workspace.name}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800 text-[10px] font-medium">
+                {isRu ? "Демо-выборка" : "Demo sample"}
+              </Badge>
+            )}
+            {!auth?.session && (
+              <ButtonLink href="/login" variant="outline" size="sm" className="hidden sm:inline-flex">
+                {isRu ? "Войти" : "Sign in"}
+              </ButtonLink>
+            )}
             <LanguageToggle className="flex gap-1" />
           </div>
         </header>

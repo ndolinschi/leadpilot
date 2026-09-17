@@ -201,6 +201,9 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <ButtonLink href="/login" variant="outline" size="sm" className="hidden sm:inline-flex">
+              {isRu ? "Войти" : "Sign in"}
+            </ButtonLink>
             <LanguageToggle className="flex gap-1" />
             <ButtonLink href="/app/inbox" size="sm" className="hidden sm:inline-flex">
               {i18n.nav.demo}

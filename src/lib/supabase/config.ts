@@ -31,3 +31,19 @@ export function getDataBackendPreference(): DataBackend {
   if (raw === "local" || raw === "supabase" || raw === "auto") return raw;
   return "auto";
 }
+
+/**
+ * Session + workspace → prefer Supabase repo.
+ * Anonymous visitors stay on labeled Demo sample (local).
+ */
+export function preferSupabaseRepo(opts: {
+  hasSession: boolean;
+  workspaceId?: string | null;
+  client?: unknown | null;
+}): boolean {
+  const pref = getDataBackendPreference();
+  if (pref === "local") return false;
+  if (!isSupabaseConfigured()) return false;
+  if (!opts.hasSession || !opts.workspaceId || !opts.client) return false;
+  return pref === "supabase" || pref === "auto";
+}

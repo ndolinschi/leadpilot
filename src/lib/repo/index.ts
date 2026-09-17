@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   getDataBackendPreference,
   isSupabaseConfigured,
+  preferSupabaseRepo,
 } from "@/lib/supabase/config";
 import { LocalDeskRepository } from "./local";
 import { SupabaseDeskRepository } from "./supabase";
@@ -27,14 +28,14 @@ export type CreateRepoOptions = {
  */
 export function createDeskRepository(opts: CreateRepoOptions = {}): DeskRepository {
   const pref = getDataBackendPreference();
-  const canSupabase =
-    pref !== "local" &&
-    isSupabaseConfigured() &&
-    Boolean(opts.client) &&
-    Boolean(opts.workspaceId);
+  // Session + workspace ⇒ prefer Supabase (auto/supabase). Anonymous ⇒ Demo sample local.
+  const canSupabase = preferSupabaseRepo({
+    hasSession: Boolean(opts.client && opts.workspaceId) || pref === "supabase",
+    workspaceId: opts.workspaceId,
+    client: opts.client,
+  });
 
   if (pref === "supabase" && !canSupabase) {
-    // Prefer supabase but fall back to local when session/workspace missing
     return new LocalDeskRepository(opts.localSeed);
   }
 

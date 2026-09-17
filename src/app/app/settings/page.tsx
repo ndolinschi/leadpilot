@@ -15,8 +15,11 @@ import {
   ShieldCheck,
   AlertCircle,
   Puzzle,
+  LogOut,
+  Building2,
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
+import { useAuthOptional } from "@/components/auth/auth-provider";
 import { t } from "@/lib/i18n";
 import type { Lang } from "@/lib/types";
 import { generateRawApiKey, hashApiKey } from "@/lib/api-auth";
@@ -50,6 +53,7 @@ import { Switch } from "@/components/ui/switch";
 const EMPTY_API_KEYS: ApiKeyRecord[] = [];
 
 export default function SettingsPage() {
+  const auth = useAuthOptional();
   const lang = useLeadsStore((s) => s.settings.language);
   const settings = useLeadsStore((s) => s.settings);
   const apiKeys = useLeadsStore((s) => s.settings.apiKeys) ?? EMPTY_API_KEYS;
@@ -137,6 +141,41 @@ export default function SettingsPage() {
           <ExternalLink className="size-3 text-muted-foreground" />
         </ButtonLink>
       </div>
+
+
+      {(auth?.session || auth?.workspace) && (
+        <Card className="border-zinc-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Building2 className="size-4 text-[#266df0]" />
+              {isRu ? "Рабочее пространство" : "Workspace account"}
+            </CardTitle>
+            <CardDescription>
+              {isRu
+                ? "Вы вошли в реальное пространство Supabase (не Demo sample)."
+                : "You are signed into a real Supabase workspace (not Demo sample)."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-sm font-medium truncate">
+                {auth?.workspace?.name || settings.companyName}
+              </div>
+              <div className="text-xs text-muted-foreground truncate">
+                {auth?.user?.email}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              className="inline-flex items-center gap-1.5 self-start"
+              onClick={() => void auth?.signOut()}
+            >
+              <LogOut className="size-4" />
+              {isRu ? "Выйти" : "Sign out"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="apiKeys" className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 max-w-2xl">

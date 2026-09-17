@@ -6,7 +6,7 @@ import {
 } from "./config";
 
 /**
- * Service-role client for trusted server paths only (webhooks, key hashing).
+ * Service-role client for trusted server paths only.
  * Returns null when service role is absent — callers must fall back safely.
  * NEVER import this from client components.
  */
