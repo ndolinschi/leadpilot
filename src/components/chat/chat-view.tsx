@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { ButtonLink } from "@/components/button-link";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { Send, Sparkles, ExternalLink } from "lucide-react";
@@ -119,10 +120,10 @@ export function ChatView({
             {lead.name} · {lead.title} @ {lead.company}
           </p>
         </div>
-        <Button variant="outline" size="sm" render={<Link href={`/app/leads/${lead.id}`} />}>
+        <ButtonLink href={`/app/leads/${lead.id}`} variant="outline" size="sm" className="inline-flex items-center gap-1.5">
           <ExternalLink className="size-3.5" />
           Lead
-        </Button>
+        </ButtonLink>
       </div>
 
       <ScrollArea className="flex-1 px-4 py-4">

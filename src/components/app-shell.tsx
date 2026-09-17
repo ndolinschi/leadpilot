@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ButtonLink } from "@/components/button-link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import {
@@ -107,7 +107,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <SidebarMenuItem>
               <SidebarMenuButton
                 size="lg"
-                render={<Link href="/" />}
+                onClick={() => router.push("/")}
                 tooltip={i18n.brand}
               >
                 <div className="flex size-8 items-center justify-center rounded-lg bg-[#266df0] text-white">
@@ -132,7 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <SidebarMenuButton
                     isActive={isActive("/app", true)}
                     tooltip={i18n.nav.dashboard}
-                    render={<Link href="/app" />}
+                    onClick={() => router.push("/app")}
                   >
                     <LayoutDashboard />
                     <span>{i18n.nav.dashboard}</span>
@@ -155,7 +155,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <SidebarMenuButton
                           isActive={isActive(p.href!)}
                           tooltip={label}
-                          render={<Link href={p.href!} />}
+                          onClick={() => router.push(p.href!)}
                         >
                           <Icon />
                           <span>{label}</span>
@@ -190,7 +190,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <SidebarMenuButton
                         isActive={isActive(p.href!)}
                         tooltip={label}
-                        render={<Link href={p.href!} />}
+                        onClick={() => router.push(p.href!)}
                       >
                         <Icon />
                         <span>{label}</span>
@@ -202,7 +202,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <SidebarMenuButton
                     isActive={isActive("/app/settings")}
                     tooltip={i18n.nav.settings}
-                    render={<Link href="/app/settings" />}
+                    onClick={() => router.push("/app/settings")}
                   >
                     <Settings />
                     <span>{i18n.nav.settings}</span>
@@ -216,7 +216,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarSeparator />
           <div className="flex items-center justify-between gap-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
             <LanguageToggle className="flex gap-1" />
-            <Button variant="outline" size="sm" render={<Link href="/" />}>
+            <Button variant="outline" size="sm" onClick={() => router.push("/")}>
               {i18n.nav.backMarketing}
             </Button>
           </div>

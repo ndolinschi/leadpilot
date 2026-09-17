@@ -4,6 +4,7 @@ import { usePluginEnabled } from "@/components/plugin-gate";
 
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
+import { ButtonLink } from "@/components/button-link";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -92,10 +93,7 @@ export default function LeadDetailPage({
   if (!lead) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" render={<Link href="/app/leads" />}>
-          <ArrowLeft className="size-4" />
-          {i18n.nav.leads}
-        </Button>
+<ButtonLink href="/app/leads" variant="ghost" size="sm" className="inline-flex items-center gap-1.5"><ArrowLeft className="size-4" />{i18n.nav.leads}</ButtonLink>
         <p className="text-muted-foreground">{i18n.detail.notFound}</p>
       </div>
     );
@@ -167,10 +165,7 @@ export default function LeadDetailPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="ghost" size="sm" render={<Link href="/app/leads" />}>
-          <ArrowLeft className="size-4" />
-          {i18n.nav.leads}
-        </Button>
+<ButtonLink href="/app/leads" variant="ghost" size="sm" className="inline-flex items-center gap-1.5"><ArrowLeft className="size-4" />{i18n.nav.leads}</ButtonLink>
         <div className="flex flex-wrap gap-2">
           {lead.outcome && (
             <Badge variant="secondary" className="capitalize">
@@ -178,14 +173,15 @@ export default function LeadDetailPage({
             </Badge>
           )}
           {activeThread ? (
-            <Button
+            <ButtonLink
+              href={`/app/inbox/${activeThread}`}
               size="sm"
               variant="outline"
-              render={<Link href={`/app/inbox/${activeThread}`} />}
+              className="inline-flex items-center gap-1.5"
             >
               <MessageSquare className="size-3.5" />
               {i18n.detail.openChat}
-            </Button>
+            </ButtonLink>
           ) : (
             <Button size="sm" onClick={startChat}>
               <MessageSquare className="size-3.5" />

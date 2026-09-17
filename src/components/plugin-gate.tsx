@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ButtonLink } from "@/components/button-link";
 import { useLeadsStore } from "@/store/leads-store";
 import { isPluginEnabled, mergePlugins, type PluginId } from "@/lib/plugins";
 import { Button } from "@/components/ui/button";
@@ -30,9 +31,7 @@ export function PluginGate({
         <p className="text-sm text-muted-foreground">
           {i18n.plugins.disabledBody}
         </p>
-        <Button render={<Link href="/app/settings" />}>
-          {i18n.nav.settings}
-        </Button>
+<ButtonLink href="/app/settings">{i18n.nav.settings}</ButtonLink>
       </div>
     );
   }

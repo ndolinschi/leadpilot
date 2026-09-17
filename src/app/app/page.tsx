@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ButtonLink } from "@/components/button-link";
 import { formatDistanceToNow } from "date-fns";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
@@ -66,7 +67,7 @@ export default function OverviewPage() {
           </h1>
           <p className="text-sm text-muted-foreground">{i18n.tagline}</p>
         </div>
-        <Button render={<Link href="/app/inbox" />}>{i18n.app.openInbox}</Button>
+<ButtonLink href="/app/inbox">{i18n.app.openInbox}</ButtonLink>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -90,9 +91,7 @@ export default function OverviewPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{i18n.app.topLeads}</CardTitle>
-            <Button variant="ghost" size="sm" render={<Link href="/app/leads" />}>
-              {i18n.app.viewAll}
-            </Button>
+<ButtonLink href="/app/leads" variant="ghost" size="sm">{i18n.app.viewAll}</ButtonLink>
           </CardHeader>
           <CardContent className="space-y-3">
             {topLeads.map((lead) => (
@@ -119,9 +118,7 @@ export default function OverviewPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{i18n.app.recentChats}</CardTitle>
-            <Button variant="ghost" size="sm" render={<Link href="/app/inbox" />}>
-              {i18n.app.viewAll}
-            </Button>
+<ButtonLink href="/app/inbox" variant="ghost" size="sm">{i18n.app.viewAll}</ButtonLink>
           </CardHeader>
           <CardContent className="space-y-3">
             {recent.map((th) => {

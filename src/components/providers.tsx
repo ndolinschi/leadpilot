@@ -7,14 +7,12 @@ import { useLeadsStore } from "@/store/leads-store";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const setHydrated = useLeadsStore((s) => s.setHydrated);
-  const hydrated = useLeadsStore((s) => s.hydrated);
 
   useEffect(() => {
-    if (!hydrated) {
-      const t = setTimeout(() => setHydrated(true), 0);
-      return () => clearTimeout(t);
-    }
-  }, [hydrated, setHydrated]);
+    // Always unlock UI quickly even if persist is slow/corrupt
+    const t = setTimeout(() => setHydrated(true), 50);
+    return () => clearTimeout(t);
+  }, [setHydrated]);
 
   return (
     <TooltipProvider>

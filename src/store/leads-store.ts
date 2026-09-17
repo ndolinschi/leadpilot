@@ -326,7 +326,7 @@ export const useLeadsStore = create<State>()(
         })),
     }),
     {
-      name: "leadpilot-crm-v1",
+      name: "leadpilot-crm-v2",
       partialize: (s) => ({
         companies: s.companies,
         leads: s.leads,
@@ -337,7 +337,10 @@ export const useLeadsStore = create<State>()(
         activities: s.activities,
         settings: s.settings,
       }),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state, err) => {
+        if (err) {
+          console.error("LeadPilot rehydrate failed", err);
+        }
         if (state) {
           state.settings = {
             ...defaultSettings,
@@ -345,6 +348,9 @@ export const useLeadsStore = create<State>()(
             plugins: mergePlugins(state.settings?.plugins),
           };
           state.setHydrated(true);
+        } else {
+          // ensure UI never sticks on skeleton forever
+          useLeadsStore.setState({ hydrated: true });
         }
       },
     }

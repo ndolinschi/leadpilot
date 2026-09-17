@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Target, MessageSquare, BarChart3, Shield, Zap, Check, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/button-link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -44,7 +45,7 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-2">
             <LanguageToggle className="flex gap-1" />
-            <Button size="sm" render={<Link href="/app" />}>{i18n.nav.demo}</Button>
+            <ButtonLink href="/app" size="sm">{i18n.nav.demo}</ButtonLink>
           </div>
         </div>
       </header>
@@ -63,13 +64,8 @@ export default function LandingPage() {
             {L.heroSub}
           </p>
           <div className="animate-fade-up-delay-3 mt-9 flex flex-wrap gap-3">
-            <Button size="lg" render={<Link href="/app" />}>
-              {L.ctaDemo}
-              <ArrowRight className="size-4" />
-            </Button>
-            <Button size="lg" variant="outline" render={<a href="#how" />}>
-              {L.ctaHow}
-            </Button>
+            <ButtonLink href="/app" size="lg" className="inline-flex items-center gap-1.5">{L.ctaDemo}<ArrowRight className="size-4" /></ButtonLink>
+            <a href="#how" className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-6 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50">{L.ctaHow}</a>
           </div>
         </div>
       </section>
@@ -173,13 +169,12 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Button
+                  <ButtonLink href="/app"
                     className="mt-auto w-full"
                     variant={p.featured ? "default" : "outline"}
-                    render={<Link href="/app" />}
-                  >
+                    >
                     {L.ctaDemo}
-                  </Button>
+                  </ButtonLink>
                 </CardContent>
               </Card>
             ))}
