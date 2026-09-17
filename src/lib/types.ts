@@ -91,6 +91,11 @@ export type ChatMessage = {
   body: string;
   at: string;
   channel: Channel;
+  attachment?: {
+    name: string;
+    size?: string;
+    type?: string;
+  };
 };
 
 export type Deal = {

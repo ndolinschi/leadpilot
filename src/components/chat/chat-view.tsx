@@ -1,25 +1,41 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { ButtonLink } from "@/components/button-link";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, isValid } from "date-fns";
+import { enUS, ru } from "date-fns/locale";
 import { toast } from "sonner";
-import { Send, Sparkles, ExternalLink } from "lucide-react";
+import { Send, Sparkles, ExternalLink, FileText } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
+import type { ChatMessage } from "@/lib/types";
 import { ChannelBadge } from "@/components/channel-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+import {
+  MessageScrollerProvider,
+  MessageScroller,
+  MessageScrollerViewport,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerButton,
+} from "@/components/ui/message-scroller";
+import { Marker, MarkerContent } from "@/components/ui/marker";
 import {
   Message,
   MessageAvatar,
   MessageContent,
   MessageFooter,
+  MessageGroup,
 } from "@/components/ui/message";
+import {
+  Attachment,
+  AttachmentContent,
+  AttachmentDescription,
+  AttachmentMedia,
+  AttachmentTitle,
+} from "@/components/ui/attachment";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { cn } from "@/lib/utils";
 import { usePluginEnabled } from "@/components/plugin-gate";
@@ -33,6 +49,68 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+type ChatFeedItem =
+  | { type: "date"; id: string; date: string }
+  | { type: "system"; id: string; message: ChatMessage }
+  | { type: "group"; id: string; direction: "in" | "out"; messages: ChatMessage[] };
+
+function buildChatFeed(messages: ChatMessage[]): ChatFeedItem[] {
+  const items: ChatFeedItem[] = [];
+  let lastDateKey = "";
+  let currentGroup: { type: "group"; id: string; direction: "in" | "out"; messages: ChatMessage[] } | null = null;
+
+  for (const m of messages) {
+    const dateObj = new Date(m.at);
+    const dateKey = isValid(dateObj) ? format(dateObj, "yyyy-MM-dd") : "";
+
+    if (dateKey && dateKey !== lastDateKey) {
+      if (currentGroup) {
+        items.push(currentGroup);
+        currentGroup = null;
+      }
+      lastDateKey = dateKey;
+      items.push({
+        type: "date",
+        id: `date-${dateKey}-${m.id}`,
+        date: m.at,
+      });
+    }
+
+    if (m.direction === "system") {
+      if (currentGroup) {
+        items.push(currentGroup);
+        currentGroup = null;
+      }
+      items.push({
+        type: "system",
+        id: m.id,
+        message: m,
+      });
+    } else {
+      const dir = m.direction as "in" | "out";
+      if (currentGroup && currentGroup.direction === dir) {
+        currentGroup.messages.push(m);
+      } else {
+        if (currentGroup) {
+          items.push(currentGroup);
+        }
+        currentGroup = {
+          type: "group",
+          id: `group-${m.id}`,
+          direction: dir,
+          messages: [m],
+        };
+      }
+    }
+  }
+
+  if (currentGroup) {
+    items.push(currentGroup);
+  }
+
+  return items;
+}
+
 export function ChatView({
   threadId,
   compact,
@@ -42,11 +120,18 @@ export function ChatView({
 }) {
   const lang = useLeadsStore((s) => s.settings.language);
   const settings = useLeadsStore((s) => s.settings);
-  const thread = useLeadsStore((s) => s.threads.find((th) => th.id === threadId));
-  const lead = useLeadsStore((s) =>
-    thread ? s.leads.find((l) => l.id === thread.leadId) : undefined
-  );
+  const threads = useLeadsStore((s) => s.threads);
+  const leads = useLeadsStore((s) => s.leads);
   const allMessages = useLeadsStore((s) => s.messages);
+
+  const thread = useMemo(
+    () => threads.find((th) => th.id === threadId),
+    [threads, threadId]
+  );
+  const lead = useMemo(
+    () => (thread ? leads.find((l) => l.id === thread.leadId) : undefined),
+    [leads, thread]
+  );
   const messages = useMemo(
     () =>
       allMessages
@@ -54,26 +139,20 @@ export function ChatView({
         .sort((a, b) => +new Date(a.at) - +new Date(b.at)),
     [allMessages, threadId]
   );
+
   const sendMessage = useLeadsStore((s) => s.sendMessage);
   const markThreadRead = useLeadsStore((s) => s.markThreadRead);
   const i18n = t(lang);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const aiOn = usePluginEnabled("ai-scoring");
-  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (threadId) markThreadRead(threadId);
   }, [threadId, markThreadRead]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, threadId]);
-
-  const sorted = useMemo(
-    () => [...messages].sort((a, b) => +new Date(a.at) - +new Date(b.at)),
-    [messages]
-  );
+  const feedItems = useMemo(() => buildChatFeed(messages), [messages]);
+  const dateLocale = lang === "ru" ? ru : enUS;
 
   if (!thread || !lead) {
     return (
@@ -109,7 +188,7 @@ export function ChatView({
         toast.success(i18n.inbox.generated);
       }
     } catch {
-      toast.error("Generation failed");
+      toast.error(i18n.inbox.generateFailed);
     } finally {
       setBusy(false);
     }
@@ -129,52 +208,129 @@ export function ChatView({
         </div>
         <ButtonLink href={`/app/leads/${lead.id}`} variant="outline" size="sm" className="inline-flex items-center gap-1.5">
           <ExternalLink className="size-3.5" />
-          Lead
+          {i18n.inbox.lead}
         </ButtonLink>
       </div>
 
-      <ScrollArea className="flex-1 px-4 py-4">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4">
-          {sorted.map((m) => {
-            if (m.direction === "system") {
-              return (
-                <div key={m.id} className="flex justify-center">
-                  <Badge variant="secondary" className="font-normal text-muted-foreground">
-                    {m.body}
-                  </Badge>
-                </div>
-              );
-            }
-            const outbound = m.direction === "out";
-            return (
-              <Message key={m.id} align={outbound ? "end" : "start"}>
-                <MessageAvatar>
-                  <Avatar className="size-8">
-                    <AvatarFallback className="text-[10px]">
-                      {outbound ? "You" : initials(lead.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                </MessageAvatar>
-                <MessageContent>
-                  <Bubble
-                    align={outbound ? "end" : "start"}
-                    variant={outbound ? "tinted" : "muted"}
-                    className={outbound ? "*:data-[slot=bubble-content]:bg-blue-50 *:data-[slot=bubble-content]:text-zinc-900 *:data-[slot=bubble-content]:border-blue-100" : "*:data-[slot=bubble-content]:bg-zinc-100 *:data-[slot=bubble-content]:text-zinc-800"}
+      <MessageScrollerProvider>
+        <MessageScroller className="flex-1">
+          <MessageScrollerViewport className="px-4 py-4">
+            <MessageScrollerContent className="mx-auto max-w-3xl gap-4">
+              {feedItems.length === 0 && (
+                <MessageScrollerItem className="py-8">
+                  <p className="text-center text-sm text-muted-foreground">
+                    {i18n.inbox.emptyHint}
+                  </p>
+                </MessageScrollerItem>
+              )}
+              {feedItems.map((item, index) => {
+                const isLast = index === feedItems.length - 1;
+
+                if (item.type === "date") {
+                  return (
+                    <MessageScrollerItem key={item.id} scrollAnchor={isLast} className="py-1">
+                      <Marker variant="separator">
+                        <MarkerContent className="px-2 text-xs font-medium text-muted-foreground">
+                          {isValid(new Date(item.date))
+                            ? format(new Date(item.date), "MMMM d, yyyy", { locale: dateLocale })
+                            : item.date}
+                        </MarkerContent>
+                      </Marker>
+                    </MessageScrollerItem>
+                  );
+                }
+
+                if (item.type === "system") {
+                  return (
+                    <MessageScrollerItem
+                      key={item.id}
+                      scrollAnchor={isLast}
+                      className="py-1"
+                    >
+                      <div className="flex justify-center">
+                        <Marker className="justify-center">
+                          <MarkerContent className="text-xs text-muted-foreground">
+                            {item.message.body}
+                          </MarkerContent>
+                        </Marker>
+                      </div>
+                    </MessageScrollerItem>
+                  );
+                }
+
+                const outbound = item.direction === "out";
+
+                return (
+                  <MessageScrollerItem
+                    key={item.id}
+                    scrollAnchor={isLast}
+                    className="py-1"
                   >
-                    <BubbleContent className="whitespace-pre-wrap border">
-                      {m.body}
-                    </BubbleContent>
-                  </Bubble>
-                  <MessageFooter>
-                    {formatDistanceToNow(new Date(m.at), { addSuffix: true })}
-                  </MessageFooter>
-                </MessageContent>
-              </Message>
-            );
-          })}
-          <div ref={bottomRef} />
-        </div>
-      </ScrollArea>
+                    <MessageGroup className="gap-2">
+                      {item.messages.map((m) => (
+                        <Message
+                          key={m.id}
+                          align={outbound ? "end" : "start"}
+                        >
+                          <MessageAvatar>
+                            <Avatar className="size-8">
+                              <AvatarFallback className="text-[10px]">
+                                {outbound ? "You" : initials(lead.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </MessageAvatar>
+                          <MessageContent>
+                            <Bubble
+                              align={outbound ? "end" : "start"}
+                              variant={outbound ? "tinted" : "muted"}
+                              className={
+                                outbound
+                                  ? "*:data-[slot=bubble-content]:bg-blue-50 *:data-[slot=bubble-content]:text-zinc-900 *:data-[slot=bubble-content]:border-blue-100"
+                                  : "*:data-[slot=bubble-content]:bg-zinc-100 *:data-[slot=bubble-content]:text-zinc-800"
+                              }
+                            >
+                              <BubbleContent className="whitespace-pre-wrap border">
+                                {m.body}
+                              </BubbleContent>
+                            </Bubble>
+                            {m.attachment && (
+                              <Attachment
+                                size="sm"
+                                className={cn("mt-1", outbound ? "self-end" : "self-start")}
+                              >
+                                <AttachmentMedia>
+                                  <FileText className="size-4 text-primary" />
+                                </AttachmentMedia>
+                                <AttachmentContent>
+                                  <AttachmentTitle>{m.attachment.name}</AttachmentTitle>
+                                  {m.attachment.size && (
+                                    <AttachmentDescription>
+                                      {m.attachment.size}
+                                    </AttachmentDescription>
+                                  )}
+                                </AttachmentContent>
+                              </Attachment>
+                            )}
+                            <MessageFooter>
+                              {isValid(new Date(m.at))
+                                ? formatDistanceToNow(new Date(m.at), {
+                                    addSuffix: true,
+                                    locale: dateLocale,
+                                  })
+                                : ""}
+                            </MessageFooter>
+                          </MessageContent>
+                        </Message>
+                      ))}
+                    </MessageGroup>
+                  </MessageScrollerItem>
+                );
+              })}
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton />
+        </MessageScroller>
+      </MessageScrollerProvider>
 
       <div className="border-t border-border/60 p-3">
         <div className="mx-auto flex max-w-3xl flex-col gap-2">
@@ -204,7 +360,7 @@ export function ChatView({
               </Button>
             ) : (
               <span className="text-xs text-muted-foreground">
-                Enable AI Scoring plugin for channel-aware messages
+                {i18n.inbox.aiOff}
               </span>
             )}
             <Button size="sm" disabled={!draft.trim()} onClick={onSend}>

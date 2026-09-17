@@ -1,9 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
+import type { Thread } from "@/lib/types";
 import { ChannelBadge } from "@/components/channel-badge";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -36,17 +38,19 @@ export function ThreadList({
   const leads = useLeadsStore((s) => s.leads);
   const i18n = t(lang);
 
-  const filtered = threads.filter((th) => {
-    const lead = leads.find((l) => l.id === th.leadId);
+  const filtered = useMemo(() => {
     const qq = query.trim().toLowerCase();
-    if (!qq) return true;
-    return (
-      th.subject.toLowerCase().includes(qq) ||
-      lead?.name.toLowerCase().includes(qq) ||
-      lead?.company.toLowerCase().includes(qq) ||
-      false
-    );
-  });
+    return threads.filter((th) => {
+      const lead = leads.find((l) => l.id === th.leadId);
+      if (!qq) return true;
+      return (
+        th.subject.toLowerCase().includes(qq) ||
+        lead?.name.toLowerCase().includes(qq) ||
+        lead?.company.toLowerCase().includes(qq) ||
+        false
+      );
+    });
+  }, [threads, leads, query]);
 
   return (
     <div className="flex h-full min-h-0 flex-col border-r border-border/60">
@@ -65,7 +69,7 @@ export function ThreadList({
               <p className="mt-1">{i18n.inbox.emptyHint}</p>
             </div>
           ) : (
-            filtered.map((th) => {
+            filtered.map((th: Thread) => {
               const lead = leads.find((l) => l.id === th.leadId);
               const active = th.id === activeId;
               return (

@@ -3,7 +3,6 @@
 import { usePluginEnabled } from "@/components/plugin-gate";
 
 import { use, useMemo, useState } from "react";
-import Link from "next/link";
 import { ButtonLink } from "@/components/button-link";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -41,7 +40,8 @@ export default function LeadDetailPage({
   const { id } = use(params);
   const lang = useLeadsStore((s) => s.settings.language);
   const settings = useLeadsStore((s) => s.settings);
-  const lead = useLeadsStore((s) => s.leads.find((l) => l.id === id));
+  const allLeads = useLeadsStore((s) => s.leads);
+  const lead = useMemo(() => allLeads.find((l) => l.id === id), [allLeads, id]);
   const hydrated = useLeadsStore((s) => s.hydrated);
   const updateLeadMessage = useLeadsStore((s) => s.updateLeadMessage);
   const updateOutcome = useLeadsStore((s) => s.updateOutcome);
@@ -60,7 +60,8 @@ export default function LeadDetailPage({
     () => allActivities.filter((a) => a.leadId === id).slice(0, 20),
     [allActivities, id]
   );
-  const deal = useLeadsStore((s) => s.deals.find((d) => d.leadId === id));
+  const allDeals = useLeadsStore((s) => s.deals);
+  const deal = useMemo(() => allDeals.find((d) => d.leadId === id), [allDeals, id]);
   const updateDealStage = useLeadsStore((s) => s.updateDealStage);
   const i18n = t(lang);
   const [busy, setBusy] = useState(false);

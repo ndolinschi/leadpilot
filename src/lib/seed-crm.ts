@@ -139,6 +139,21 @@ export function createCrmSeed(leadCount = 40): CrmSeed {
       } else {
         body = LEAD_INBOUNDS[Math.floor(rng() * LEAD_INBOUNDS.length)]!;
       }
+      let attachment: ChatMessage["attachment"] = undefined;
+      if (ti === 0 && m === 0) {
+        attachment = {
+          name: "LeadPilot_Product_Overview.pdf",
+          size: "2.4 MB",
+          type: "pdf",
+        };
+      } else if (ti === 1 && m === 0) {
+        attachment = {
+          name: "Enterprise_Case_Study.pdf",
+          size: "1.8 MB",
+          type: "pdf",
+        };
+      }
+
       const msg: ChatMessage = {
         id: `msg_${threadId}_${m + 1}`,
         threadId,
@@ -146,6 +161,7 @@ export function createCrmSeed(leadCount = 40): CrmSeed {
         body,
         at,
         channel,
+        ...(attachment ? { attachment } : {}),
       };
       threadMsgs.push(msg);
       messages.push(msg);

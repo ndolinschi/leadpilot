@@ -21,6 +21,14 @@ import { DEAL_STAGES } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function DealCard({ deal, leadName }: { deal: Deal; leadName: string }) {
@@ -150,51 +158,69 @@ export default function DealsPage() {
         <p className="text-sm text-muted-foreground">{i18n.dealsPage.subtitle}</p>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragEnd={onDragEnd}
-      >
-        <div className="flex gap-3 overflow-x-auto pb-4">
-          {DEAL_STAGES.map((stage) => (
-            <StageColumn
-              key={stage}
-              stage={stage}
-              title={i18n.dealsPage.stages[stage]}
-              deals={byStage[stage]}
-              leadName={leadName}
-            />
-          ))}
-        </div>
-      </DndContext>
-
-      {/* Fallback stage buttons for accessibility / mobile */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Quick stage update</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          {deals.slice(0, 6).map((d) => (
-            <div
-              key={d.id}
-              className="flex flex-wrap items-center gap-1 rounded-lg border border-border/50 px-2 py-1.5 text-xs"
-            >
-              <span className="mr-1 font-medium">{d.title}</span>
-              {DEAL_STAGES.map((s) => (
-                <Button
-                  key={s}
-                  size="sm"
-                  variant={d.stage === s ? "default" : "outline"}
-                  className="h-7 px-2 text-[10px]"
-                  onClick={() => updateDealStage(d.id, s)}
-                >
-                  {i18n.dealsPage.stages[s]}
-                </Button>
+      {deals.length === 0 ? (
+        <Card className="p-8">
+          <Empty className="py-12 border-none">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Inbox className="size-5" />
+              </EmptyMedia>
+              <EmptyTitle>{i18n.dealsPage.emptyAll}</EmptyTitle>
+              <EmptyDescription>
+                {i18n.dealsPage.emptyHint}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        </Card>
+      ) : (
+        <>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragEnd={onDragEnd}
+          >
+            <div className="flex gap-3 overflow-x-auto pb-4">
+              {DEAL_STAGES.map((stage) => (
+                <StageColumn
+                  key={stage}
+                  stage={stage}
+                  title={i18n.dealsPage.stages[stage]}
+                  deals={byStage[stage]}
+                  leadName={leadName}
+                />
               ))}
             </div>
-          ))}
-        </CardContent>
-      </Card>
+          </DndContext>
+
+          {/* Fallback stage buttons for accessibility / mobile */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Quick stage update</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              {deals.slice(0, 6).map((d) => (
+                <div
+                  key={d.id}
+                  className="flex flex-wrap items-center gap-1 rounded-lg border border-border/50 px-2 py-1.5 text-xs"
+                >
+                  <span className="mr-1 font-medium">{d.title}</span>
+                  {DEAL_STAGES.map((s) => (
+                    <Button
+                      key={s}
+                      size="sm"
+                      variant={d.stage === s ? "default" : "outline"}
+                      className="h-7 px-2 text-[10px]"
+                      onClick={() => updateDealStage(d.id, s)}
+                    >
+                      {i18n.dealsPage.stages[s]}
+                    </Button>
+                  ))}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   </PluginGate>
   );

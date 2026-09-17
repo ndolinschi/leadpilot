@@ -1,14 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import { useMemo } from "react";
 import { ButtonLink } from "@/components/button-link";
 import { useLeadsStore } from "@/store/leads-store";
 import { isPluginEnabled, mergePlugins, type PluginId } from "@/lib/plugins";
-import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 
 export function usePluginEnabled(id: PluginId): boolean {
-  return useLeadsStore((s) => isPluginEnabled(mergePlugins(s.settings.plugins), id));
+  const plugins = useLeadsStore((s) => s.settings.plugins);
+  return useMemo(() => isPluginEnabled(mergePlugins(plugins), id), [plugins, id]);
 }
 
 export function PluginGate({

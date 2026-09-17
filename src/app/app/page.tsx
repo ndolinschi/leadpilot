@@ -10,7 +10,6 @@ import { t } from "@/lib/i18n";
 import { ChannelBadge } from "@/components/channel-badge";
 import { ScoreBar } from "@/components/score-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { mergePlugins, isPluginEnabled } from "@/lib/plugins";
 
@@ -25,17 +24,35 @@ export default function OverviewPage() {
   const pluginsRaw = useLeadsStore((s) => s.settings.plugins);
   const plugins = useMemo(() => mergePlugins(pluginsRaw), [pluginsRaw]);
 
-  const unread = threads.reduce((n, th) => n + (th.unread || 0), 0);
-  const pipeline = deals
-    .filter((d) => d.stage !== "lost")
-    .reduce((s, d) => s + d.value, 0);
-  const openTasks = tasks.filter((t) => !t.done).length;
-  const topLeads = [...leads]
-    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    .slice(0, 6);
-  const recent = [...threads]
-    .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
-    .slice(0, 6);
+  const unread = useMemo(
+    () => threads.reduce((n, th) => n + (th.unread || 0), 0),
+    [threads]
+  );
+  const pipeline = useMemo(
+    () =>
+      deals
+        .filter((d) => d.stage !== "lost")
+        .reduce((s, d) => s + d.value, 0),
+    [deals]
+  );
+  const openTasks = useMemo(
+    () => tasks.filter((t) => !t.done).length,
+    [tasks]
+  );
+  const topLeads = useMemo(
+    () =>
+      [...leads]
+        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+        .slice(0, 6),
+    [leads]
+  );
+  const recent = useMemo(
+    () =>
+      [...threads]
+        .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
+        .slice(0, 6),
+    [threads]
+  );
 
   if (!hydrated) {
     return (

@@ -67,8 +67,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const lang = useLeadsStore((s) => s.settings.language);
   const pluginsRaw = useLeadsStore((s) => s.settings.plugins);
   const plugins = useMemo(() => mergePlugins(pluginsRaw), [pluginsRaw]);
-  const unread = useLeadsStore((s) =>
-    s.threads.reduce((n, th) => n + (th.unread || 0), 0)
+  const threads = useLeadsStore((s) => s.threads);
+  const unread = useMemo(
+    () => threads.reduce((n, th) => n + (th.unread || 0), 0),
+    [threads]
   );
   const i18n = t(lang);
 
