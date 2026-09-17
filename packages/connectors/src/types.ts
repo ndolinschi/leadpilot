@@ -50,7 +50,7 @@ export interface WebhookResult {
   details?: Record<string, unknown>;
 }
 
-/** WordPress-style hook lifecycle events */
+/** Connector hook lifecycle events */
 export type ConnectorHookName =
   | "before_install"
   | "after_install"

@@ -191,7 +191,7 @@ export default function SettingsPage() {
           </TabsTrigger>
           <TabsTrigger value="plugins" className="inline-flex items-center gap-1.5">
             <Puzzle className="size-3.5" />
-            <span>{isRu ? "Плагины" : "Plugins"}</span>
+            <span>{isRu ? "Модули" : "Modules"}</span>
           </TabsTrigger>
           <TabsTrigger value="billing" className="inline-flex items-center gap-1.5">
             <CreditCard className="size-3.5" />
@@ -349,17 +349,17 @@ export default function SettingsPage() {
         </TabsContent>
 
 
-        {/* Tab: WordPress-style desk plugins */}
+        {/* Tab: workspace modules */}
         <TabsContent value="plugins" className="mt-6 space-y-6">
           <Card className="border-zinc-200 bg-white shadow-none">
             <CardHeader>
               <CardTitle className="text-base">
-                {isRu ? "Плагины рабочего стола" : "Desk plugins"}
+                {isRu ? "Модули рабочего пространства" : "Workspace modules"}
               </CardTitle>
               <CardDescription>
                 {isRu
-                  ? "Активируйте и деактивируйте модули как в WordPress. Неактивные скрывают маршруты и API-поверхности."
-                  : "Activate and deactivate modules like WordPress. Inactive plugins hide routes and API surfaces."}
+                  ? "Активируйте и деактивируйте модули. Неактивные скрывают маршруты и API-поверхности."
+                  : "Activate and deactivate modules. Inactive modules hide routes and API surfaces."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -412,8 +412,8 @@ export default function SettingsPage() {
                             err instanceof Error
                               ? err.message
                               : isRu
-                                ? "Не удалось изменить плагин"
-                                : "Could not update plugin"
+                                ? "Не удалось изменить модуль"
+                                : "Could not update module"
                           );
                         }
                       }}

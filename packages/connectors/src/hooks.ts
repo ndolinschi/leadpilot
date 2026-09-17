@@ -3,7 +3,7 @@ import type { ConnectorHookContext, ConnectorHookHandler, ConnectorHookName } fr
 const hooksMap: Map<ConnectorHookName, Set<ConnectorHookHandler>> = new Map();
 
 /**
- * Register a WordPress-style action hook for connectors
+ * Register an action hook for connectors
  */
 export function addConnectorHook(
   event: ConnectorHookName,

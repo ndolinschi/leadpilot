@@ -586,14 +586,14 @@ export class SupabaseDeskRepository implements DeskRepository {
 
   async listPluginInstalls(): Promise<PluginInstall[]> {
     const { data, error } = await this.client
-      .from("wp_plugins")
+      .from("modules")
       .select("*")
       .eq("workspace_id", this.workspaceId);
     if (error) throw error;
     return (data || []).map((r) => ({
       id: r.id,
       workspaceId: r.workspace_id,
-      pluginId: r.plugin_slug,
+      pluginId: r.module_slug,
       status: r.status as PluginInstallStatus,
       config: (r.config || {}) as Record<string, unknown>,
       activatedAt: r.activated_at,
@@ -603,17 +603,17 @@ export class SupabaseDeskRepository implements DeskRepository {
 
   async getPluginInstall(pluginId: PluginId | string): Promise<PluginInstall | null> {
     const { data, error } = await this.client
-      .from("wp_plugins")
+      .from("modules")
       .select("*")
       .eq("workspace_id", this.workspaceId)
-      .eq("plugin_slug", String(pluginId))
+      .eq("module_slug", String(pluginId))
       .maybeSingle();
     if (error) throw error;
     if (!data) return null;
     return {
       id: data.id,
       workspaceId: data.workspace_id,
-      pluginId: data.plugin_slug,
+      pluginId: data.module_slug,
       status: data.status as PluginInstallStatus,
       config: (data.config || {}) as Record<string, unknown>,
       activatedAt: data.activated_at,
@@ -638,22 +638,22 @@ export class SupabaseDeskRepository implements DeskRepository {
     const existing = await this.getPluginInstall(slug);
     const row = {
       workspace_id: this.workspaceId,
-      plugin_slug: slug,
+      module_slug: slug,
       status,
       config: { ...(existing?.config || {}), ...(config || {}) },
       activated_at: status === "active" ? new Date().toISOString() : null,
     };
 
     const { data, error } = await this.client
-      .from("wp_plugins")
-      .upsert(row, { onConflict: "workspace_id,plugin_slug" })
+      .from("modules")
+      .upsert(row, { onConflict: "workspace_id,module_slug" })
       .select("*")
       .single();
     if (error) throw error;
     return {
       id: data.id,
       workspaceId: data.workspace_id,
-      pluginId: data.plugin_slug,
+      pluginId: data.module_slug,
       status: data.status as PluginInstallStatus,
       config: (data.config || {}) as Record<string, unknown>,
       activatedAt: data.activated_at,

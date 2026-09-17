@@ -2,8 +2,8 @@ import type { DeskRepository, PluginId, PluginInstall, PluginInstallStatus } fro
 import { getPlugin, runPluginHooks } from "@leadpilot/core";
 
 /**
- * WordPress-style activate / deactivate for desk plugins.
- * Persists via DeskRepository (local Demo sample or wp_plugins table).
+ * Activate / deactivate workspace modules.
+ * Persists via DeskRepository (local Demo sample or `modules` table).
  * Gates routes through existing PluginGate + settings.plugins map.
  */
 export async function activatePlugin(
@@ -13,7 +13,7 @@ export async function activatePlugin(
 ): Promise<PluginInstall> {
   const manifest = getPlugin(pluginId);
   if (!manifest) {
-    throw new Error(`Unknown plugin: ${pluginId}`);
+    throw new Error(`Unknown module: ${pluginId}`);
   }
   return repo.setPluginStatus(pluginId, "active", config);
 }
@@ -24,10 +24,10 @@ export async function deactivatePlugin(
 ): Promise<PluginInstall> {
   const manifest = getPlugin(pluginId);
   if (!manifest) {
-    throw new Error(`Unknown plugin: ${pluginId}`);
+    throw new Error(`Unknown module: ${pluginId}`);
   }
   if (manifest.locked) {
-    throw new Error(`Plugin "${pluginId}" is required and cannot be deactivated`);
+    throw new Error(`Module "${pluginId}" is required and cannot be deactivated`);
   }
   return repo.setPluginStatus(pluginId, "inactive");
 }
@@ -39,7 +39,7 @@ export async function installPlugin(
 ): Promise<PluginInstall> {
   const manifest = getPlugin(pluginId);
   if (!manifest) {
-    throw new Error(`Unknown plugin: ${pluginId}`);
+    throw new Error(`Unknown module: ${pluginId}`);
   }
   const existing = await repo.getPluginInstall(pluginId);
   if (existing) return existing;

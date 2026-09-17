@@ -66,7 +66,7 @@ export interface DeskRepository {
   getWorkspaceSettings(): Promise<CompanySettings>;
   saveWorkspaceSettings(settings: Partial<CompanySettings>): Promise<CompanySettings>;
 
-  /** WordPress-style plugin installs */
+  /** Module installs (activate / deactivate) */
   listPluginInstalls(): Promise<PluginInstall[]>;
   getPluginInstall(pluginId: PluginId | string): Promise<PluginInstall | null>;
   setPluginStatus(

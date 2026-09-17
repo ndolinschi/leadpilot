@@ -234,7 +234,7 @@ export function navPlugins(plugins: Record<PluginId, boolean>) {
   );
 }
 
-/** WordPress-style lifecycle hook contracts */
+/** Module lifecycle hook contracts */
 export type PluginHookEvent = "install" | "activate" | "deactivate" | "uninstall";
 
 export type PluginHookHandler = (context: {

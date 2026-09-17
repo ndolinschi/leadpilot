@@ -10,9 +10,11 @@ LeadPilot uses Supabase for Auth, Postgres (RLS multi-tenant), and Realtime.
 | Project id | `xxyhztviztdhvjzdfdmb` |
 | URL | `https://xxyhztviztdhvjzdfdmb.supabase.co` |
 | Region | `eu-central-1` |
-| Applied migration | `leadpilot_init_desk` (= `supabase/migrations/0001_init.sql`) |
+| Applied migrations | `0001_init.sql` (+ `0002_rename_modules.sql`: `wp_plugins`→`modules`) |
 
-Tables: `workspaces`, `memberships`, `wp_plugins` (WordPress-style install/activate/deactivate), `companies`, `leads`, `threads`, `messages`, `deals`, `tasks`, `activities`, `connector_installs`, `api_keys`.
+Tables: `workspaces`, `memberships`, `modules` (install/activate/deactivate; `module_slug`), `companies`, `leads`, `threads`, `messages`, `deals`, `tasks`, `activities`, `connector_installs`, `api_keys`.
+
+Migration `0002_rename_modules.sql` renames legacy `wp_plugins` / `plugin_slug` → `modules` / `module_slug`.
 
 ## 1. Create a project (if starting fresh)
 
@@ -61,7 +63,7 @@ If `NEXT_PUBLIC_SUPABASE_URL` or anon key is missing:
 
 Never present demo seed as live production data.
 
-## 5. WordPress-style plugins (`wp_plugins`)
+## 5. Modules (`modules`)
 
 | status | meaning |
 |--------|---------|
@@ -69,7 +71,7 @@ Never present demo seed as live production data.
 | `active` | Gates nav, `PluginGate`, and API surfaces |
 | `inactive` | Installed but deactivated |
 
-Activate/deactivate updates `status` + `activated_at` and fires package hooks in `@leadpilot/core`. No “Coming soon” walls — inactive plugins hide routes; missing features are real deactivate states.
+Column `module_slug` matches the registry id. Activate/deactivate updates `status` + `activated_at` and fires package hooks in `@leadpilot/core`. Inactive modules hide routes; missing features are real deactivate states.
 
 ## 6. Auth (Task 3+)
 
@@ -98,7 +100,7 @@ On first successful login the client/server bootstrap:
 
 1. Creates a `workspaces` row (if the user has no membership)
 2. Inserts an `owner` row in `memberships`
-3. Seeds `wp_plugins` from `PLUGIN_REGISTRY` (core modules `active`; optional modules `inactive`)
+3. Seeds `modules` from `PLUGIN_REGISTRY` (core modules `active`; optional modules `inactive`)
 4. Seeds `connector_installs` for built-in connectors with `enabled=false` until activated
 
 Signed-in sessions make `DATA_BACKEND=auto` prefer the Supabase desk repository. Anonymous visitors stay on the labeled **Demo sample** local mode.

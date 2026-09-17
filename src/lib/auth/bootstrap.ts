@@ -22,7 +22,7 @@ function slugify(input: string): string {
 
 /**
  * On first successful login: create workspace + owner membership if none,
- * seed wp_plugins (core modules active; optional inactive),
+ * seed modules (core modules active; optional inactive),
  * seed connector_installs as installed but enabled=false until activated.
  */
 export async function ensureWorkspaceForUser(
@@ -104,7 +104,7 @@ async function seedDefaults(client: SupabaseClient, workspaceId: string) {
     const status = p.defaultStatus ?? "inactive";
     return {
       workspace_id: workspaceId,
-      plugin_slug: String(p.id),
+      module_slug: String(p.id),
       status,
       config: {},
       activated_at: status === "active" ? new Date().toISOString() : null,
@@ -112,8 +112,8 @@ async function seedDefaults(client: SupabaseClient, workspaceId: string) {
   });
 
   const { error: plugErr } = await client
-    .from("wp_plugins")
-    .upsert(pluginRows, { onConflict: "workspace_id,plugin_slug" });
+    .from("modules")
+    .upsert(pluginRows, { onConflict: "workspace_id,module_slug" });
   if (plugErr) throw plugErr;
 
   const connectorRows = BUILTIN_CONNECTORS.map((c) => ({

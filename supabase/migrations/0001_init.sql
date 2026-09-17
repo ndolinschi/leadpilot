@@ -1,6 +1,6 @@
 -- LeadPilot init desk schema (matches applied migration leadpilot_init_desk)
 -- Project: xxyhztviztdhvjzdfdmb (eu-central-1)
--- Multi-tenant Client Operations Desk + WordPress-style wp_plugins
+-- Multi-tenant Client Operations Desk + modules (created as wp_plugins; renamed in 0002)
 
 create extension if not exists "pgcrypto";
 
@@ -49,7 +49,7 @@ create index if not exists memberships_user_id_idx on public.memberships(user_id
 create index if not exists memberships_workspace_id_idx on public.memberships(workspace_id);
 
 -- ---------------------------------------------------------------------------
--- WordPress-style plugins (install / activate / deactivate)
+-- Modules table (install / activate / deactivate; renamed to modules in 0002)
 -- status: installed | active | inactive
 -- ---------------------------------------------------------------------------
 create table if not exists public.wp_plugins (
