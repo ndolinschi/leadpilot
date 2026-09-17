@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Key,
@@ -54,6 +55,7 @@ const EMPTY_API_KEYS: ApiKeyRecord[] = [];
 
 export default function SettingsPage() {
   const auth = useAuthOptional();
+  const router = useRouter();
   const lang = useLeadsStore((s) => s.settings.language);
   const settings = useLeadsStore((s) => s.settings);
   const apiKeys = useLeadsStore((s) => s.settings.apiKeys) ?? EMPTY_API_KEYS;
@@ -168,7 +170,7 @@ export default function SettingsPage() {
             <Button
               variant="outline"
               className="inline-flex items-center gap-1.5 self-start"
-              onClick={() => void auth?.signOut()}
+              onClick={async () => { await auth?.signOut(); router.push("/login"); }}
             >
               <LogOut className="size-4" />
               {isRu ? "Выйти" : "Sign out"}
