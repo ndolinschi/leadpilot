@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import Link from "next/link";
 import { ButtonLink } from "@/components/button-link";
 import { formatDistanceToNow } from "date-fns";
@@ -20,7 +22,8 @@ export default function OverviewPage() {
   const tasks = useLeadsStore((s) => s.tasks);
   const hydrated = useLeadsStore((s) => s.hydrated);
   const i18n = t(lang);
-  const plugins = useLeadsStore((s) => mergePlugins(s.settings.plugins));
+  const pluginsRaw = useLeadsStore((s) => s.settings.plugins);
+  const plugins = useMemo(() => mergePlugins(pluginsRaw), [pluginsRaw]);
 
   const unread = threads.reduce((n, th) => n + (th.unread || 0), 0);
   const pipeline = deals

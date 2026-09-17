@@ -47,13 +47,18 @@ export default function LeadDetailPage({
   const updateOutcome = useLeadsStore((s) => s.updateOutcome);
   const regenerateMessage = useLeadsStore((s) => s.regenerateMessage);
   const openOrCreateThread = useLeadsStore((s) => s.openOrCreateThread);
-  const threads = useLeadsStore((s) =>
-    s.threads
-      .filter((th) => th.leadId === id)
-      .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
+  const allThreads = useLeadsStore((s) => s.threads);
+  const allActivities = useLeadsStore((s) => s.activities);
+  const threads = useMemo(
+    () =>
+      allThreads
+        .filter((th) => th.leadId === id)
+        .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)),
+    [allThreads, id]
   );
-  const activities = useLeadsStore((s) =>
-    s.activities.filter((a) => a.leadId === id).slice(0, 20)
+  const activities = useMemo(
+    () => allActivities.filter((a) => a.leadId === id).slice(0, 20),
+    [allActivities, id]
   );
   const deal = useLeadsStore((s) => s.deals.find((d) => d.leadId === id));
   const updateDealStage = useLeadsStore((s) => s.updateDealStage);

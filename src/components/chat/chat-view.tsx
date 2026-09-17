@@ -46,7 +46,14 @@ export function ChatView({
   const lead = useLeadsStore((s) =>
     thread ? s.leads.find((l) => l.id === thread.leadId) : undefined
   );
-  const messages = useLeadsStore((s) => s.getThreadMessages(threadId));
+  const allMessages = useLeadsStore((s) => s.messages);
+  const messages = useMemo(
+    () =>
+      allMessages
+        .filter((m) => m.threadId === threadId)
+        .sort((a, b) => +new Date(a.at) - +new Date(b.at)),
+    [allMessages, threadId]
+  );
   const sendMessage = useLeadsStore((s) => s.sendMessage);
   const markThreadRead = useLeadsStore((s) => s.markThreadRead);
   const i18n = t(lang);

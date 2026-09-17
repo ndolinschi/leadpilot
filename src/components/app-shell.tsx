@@ -1,8 +1,9 @@
 "use client";
 
 import { ButtonLink } from "@/components/button-link";
+
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   LayoutDashboard,
   Inbox,
@@ -18,7 +19,6 @@ import {
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/language-toggle";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
@@ -65,7 +65,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const lang = useLeadsStore((s) => s.settings.language);
-  const plugins = useLeadsStore((s) => mergePlugins(s.settings.plugins));
+  const pluginsRaw = useLeadsStore((s) => s.settings.plugins);
+  const plugins = useMemo(() => mergePlugins(pluginsRaw), [pluginsRaw]);
   const unread = useLeadsStore((s) =>
     s.threads.reduce((n, th) => n + (th.unread || 0), 0)
   );
@@ -216,9 +217,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarSeparator />
           <div className="flex items-center justify-between gap-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
             <LanguageToggle className="flex gap-1" />
-            <Button variant="outline" size="sm" onClick={() => router.push("/")}>
+            <ButtonLink href="/" variant="outline" size="sm">
               {i18n.nav.backMarketing}
-            </Button>
+            </ButtonLink>
           </div>
         </SidebarFooter>
       </Sidebar>
