@@ -22,6 +22,7 @@ import { ChannelBadge } from "@/components/channel-badge";
 import { ScoreBar } from "@/components/score-bar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { OnboardingChecklist } from "@/components/onboarding/checklist";
 
 export default function OverviewPage() {
   const lang = useLeadsStore((s) => s.settings.language);
@@ -82,7 +83,7 @@ export default function OverviewPage() {
     return sortedLeads[0] ?? null;
   }, [sortedLeads]);
 
-  const firstThreadId = firstThread?.id ?? "th_001";
+  const firstThreadId = firstThread?.id ?? null;
 
   if (!hydrated) {
     return (
@@ -100,6 +101,7 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6">
+      <OnboardingChecklist />
       {/* Top Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -109,7 +111,7 @@ export default function OverviewPage() {
           <p className="text-sm text-muted-foreground">{i18n.overviewStory.heroSub}</p>
         </div>
         <div className="flex items-center gap-2">
-          <ButtonLink href={`/app/inbox/${firstThreadId}`} variant="outline">
+          <ButtonLink href={firstThreadId ? `/app/inbox/${firstThreadId}` : "/app/inbox"} variant="outline">
             {i18n.app.openInbox}
           </ButtonLink>
           <ButtonLink href="/app/marketplace" variant="outline">

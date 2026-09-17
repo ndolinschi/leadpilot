@@ -1,11 +1,28 @@
+import { createClient } from "@supabase/supabase-js";
+import {
+  getSupabaseAnonKey,
+  getSupabaseServiceRoleKey,
+  getSupabaseUrl,
+  isSupabaseConfigured,
+} from "@/lib/supabase/config";
+
 export interface ApiKeyRecord {
   id: string;
   name: string;
-  prefix: string; // e.g. lp_live_8f3a...
+  prefix: string;
   hashedKey: string;
   createdAt: string;
   lastUsedAt?: string;
 }
+
+export type VerifiedApiAuth = {
+  authorized: boolean;
+  error?: string;
+  status?: number;
+  keyPrefix?: string;
+  workspaceId?: string;
+  keyId?: string;
+};
 
 export async function hashApiKey(key: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -24,31 +41,37 @@ export function generateRawApiKey(env: "live" | "test" = "live"): string {
   return `lp_${env}_${randomHex}`;
 }
 
-export async function verifyApiRequest(
-  request: Request
-): Promise<{ authorized: boolean; error?: string; status?: number; keyPrefix?: string }> {
+function extractToken(request: Request): string {
   const authHeader = request.headers.get("authorization");
   const xApiKey = request.headers.get("x-api-key");
+  if (authHeader?.startsWith("Bearer ")) return authHeader.slice(7).trim();
+  if (xApiKey) return xApiKey.trim();
+  return "";
+}
 
-  let token = "";
-  if (authHeader?.startsWith("Bearer ")) {
-    token = authHeader.slice(7).trim();
-  } else if (xApiKey) {
-    token = xApiKey.trim();
-  }
+/**
+ * Verify API key for /api/v1:
+ * 1) LEADPILOT_API_KEYS env (comma-separated raw or sha256)
+ * 2) Supabase api_keys via verify_api_key RPC (hashed)
+ * 3) Structured lp_* demo key only when no DB keys path available
+ */
+export async function verifyApiRequest(request: Request): Promise<VerifiedApiAuth> {
+  const token = extractToken(request);
 
   if (!token) {
     return {
       authorized: false,
-      error: "Unauthorized: Missing API key. Provide 'Authorization: Bearer lp_...' or 'x-api-key: lp_...'.",
+      error:
+        "Unauthorized: Missing API key. Provide 'Authorization: Bearer lp_...' or 'x-api-key: lp_...'.",
       status: 401,
     };
   }
 
+  const hashed = await hashApiKey(token);
+
   const envKeysRaw = process.env.LEADPILOT_API_KEYS;
   if (envKeysRaw) {
     const envKeys = envKeysRaw.split(",").map((k) => k.trim()).filter(Boolean);
-    const hashed = await hashApiKey(token);
     const isMatched = envKeys.includes(token) || envKeys.includes(hashed);
     if (!isMatched) {
       return {
@@ -60,17 +83,56 @@ export async function verifyApiRequest(
     return { authorized: true, keyPrefix: token.slice(0, 10) + "…" };
   }
 
-  // Hobby Pragmatism:
-  // On Vercel Hobby serverless without a shared database, client state lives in localStorage.
-  // We validate key structure (lp_live_*, lp_test_*, or lp_demo_key) so developers can test
-  // their automation pipelines immediately against serverless routes.
-  if (token === "lp_demo_key" || token.startsWith("lp_")) {
+  if (isSupabaseConfigured()) {
+    const url = getSupabaseUrl()!;
+    const key = getSupabaseServiceRoleKey() || getSupabaseAnonKey()!;
+    try {
+      const client = createClient(url, key, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data, error } = await client.rpc("verify_api_key", {
+        p_key_hash: hashed,
+      });
+      if (!error && data && Array.isArray(data) && data.length > 0) {
+        const row = data[0] as {
+          workspace_id: string;
+          key_id: string;
+          key_prefix: string;
+        };
+        return {
+          authorized: true,
+          workspaceId: row.workspace_id,
+          keyId: row.key_id,
+          keyPrefix: row.key_prefix || token.slice(0, 10) + "…",
+        };
+      }
+      // Single-object shape from some PostgREST versions
+      if (!error && data && !Array.isArray(data) && (data as { workspace_id?: string }).workspace_id) {
+        const row = data as {
+          workspace_id: string;
+          key_id: string;
+          key_prefix: string;
+        };
+        return {
+          authorized: true,
+          workspaceId: row.workspace_id,
+          keyId: row.key_id,
+          keyPrefix: row.key_prefix || token.slice(0, 10) + "…",
+        };
+      }
+    } catch (err) {
+      console.error("[api-auth] verify_api_key rpc", err);
+    }
+  }
+
+  // Demo / local structure check — only when Supabase path did not authorize
+  if (token === "lp_demo_key" || /^lp_(live|test)_[a-f0-9]{20,}$/i.test(token)) {
     return { authorized: true, keyPrefix: token.slice(0, 10) + "…" };
   }
 
   return {
     authorized: false,
-    error: "Invalid API key format. Keys must start with 'lp_live_' or 'lp_test_'.",
+    error: "Invalid API key. Generate a key in Workspace → API keys.",
     status: 401,
   };
 }

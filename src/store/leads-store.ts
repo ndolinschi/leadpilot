@@ -25,7 +25,7 @@ import { DEFAULT_PLUGINS, getPlugin, mergePlugins, type PluginId } from "@/lib/p
 import { activatePlugin, deactivatePlugin } from "@/lib/plugins/module-activate";
 import { activateConnector, deactivateConnector } from "@/lib/connectors/registry";
 import type { ConnectorManifest } from "@/lib/connectors/types";
-import { LocalDeskRepository } from "@/lib/repo";
+import { getActiveDeskRepository, persistRepo } from "@/lib/repo";
 
 const defaultConnectors: Record<string, ConnectorState> = {
   csv: { enabled: true, installed: true },
@@ -83,6 +83,7 @@ type State = {
   settings: CompanySettings;
   customConnectors: ConnectorManifest[];
   hydrated: boolean;
+  dataBackend: "local" | "supabase";
   setHydrated: (v: boolean) => void;
   resetDemo: () => void;
   updateSettings: (partial: Partial<CompanySettings>) => void;
@@ -134,6 +135,7 @@ export const useLeadsStore = create<State>()(
     (set, get) => ({
       ...seedState(defaultSettings),
       hydrated: false,
+      dataBackend: "local",
       setHydrated: (v) => set({ hydrated: v }),
       resetDemo: () =>
         set({
@@ -141,6 +143,7 @@ export const useLeadsStore = create<State>()(
             ...defaultSettings,
             language: get().settings.language,
           }),
+          dataBackend: "local",
         }),
       updateSettings: (partial) =>
         set((s) => ({
@@ -157,26 +160,52 @@ export const useLeadsStore = create<State>()(
             },
           },
         })),
-      addApiKey: (key) =>
+      addApiKey: (key) => {
+        persistRepo(async (repo) => {
+          const saved = await repo.createApiKey({
+            name: key.name,
+            prefix: key.prefix,
+            hashedKey: key.hashedKey,
+          });
+          set((s) => ({
+            settings: {
+              ...s.settings,
+              apiKeys: [
+                saved,
+                ...(s.settings.apiKeys || []).filter((k) => k.id !== key.id && k.id !== saved.id),
+              ],
+            },
+          }));
+        });
         set((s) => ({
           settings: {
             ...s.settings,
             apiKeys: [key, ...(s.settings.apiKeys || [])],
           },
-        })),
-      revokeApiKey: (id) =>
+        }));
+      },
+      revokeApiKey: (id) => {
+        persistRepo(async (repo) => {
+          await repo.revokeApiKey(id);
+        });
         set((s) => ({
           settings: {
             ...s.settings,
             apiKeys: (s.settings.apiKeys || []).filter((k) => k.id !== id),
           },
-        })),
+        }));
+      },
       toggleConnector: (id, enabled) => {
-        const workspaceId = "local-demo";
-        // Fire connector lifecycle hooks (real, not mocked)
+        const workspaceId =
+          getActiveDeskRepository()?.backend === "supabase"
+            ? "workspace"
+            : "local-demo";
         void (enabled
           ? activateConnector(workspaceId, id)
           : deactivateConnector(workspaceId, id));
+        persistRepo(async (repo) => {
+          await repo.setConnectorEnabled(id, enabled);
+        });
         set((s) => {
           const current = s.settings.connectors || defaultConnectors;
           const entry = current[id] || { installed: true, enabled: false };
@@ -196,11 +225,10 @@ export const useLeadsStore = create<State>()(
         if (manifest?.locked && !enabled) {
           throw new Error(`Plugin "${id}" is required and cannot be deactivated`);
         }
-        // Persist via DeskRepository + modules lifecycle (local Demo sample today)
-        const repo = new LocalDeskRepository({
-          settings: get().settings,
+        persistRepo(async (repo) => {
+          if (enabled) await activatePlugin(repo, id);
+          else await deactivatePlugin(repo, id);
         });
-        void (enabled ? activatePlugin(repo, id) : deactivatePlugin(repo, id));
         set((s) => ({
           settings: {
             ...s.settings,
@@ -211,7 +239,7 @@ export const useLeadsStore = create<State>()(
           },
         }));
       },
-      updateConnectorConfig: (id, config) =>
+      updateConnectorConfig: (id, config) => {
         set((s) => {
           const current = s.settings.connectors || defaultConnectors;
           const entry = current[id] || { installed: true, enabled: true };
@@ -227,7 +255,15 @@ export const useLeadsStore = create<State>()(
               },
             },
           };
-        }),
+        });
+        persistRepo(async (repo) => {
+          const entry = get().settings.connectors?.[id];
+          await repo.setConnectorEnabled(id, entry?.enabled !== false, {
+            ...(entry?.config || {}),
+            ...config,
+          });
+        });
+      },
       registerConnector: (manifest) =>
         set((s) => {
           const exists = s.customConnectors.some((c) => c.id === manifest.id);
@@ -236,7 +272,7 @@ export const useLeadsStore = create<State>()(
             : [manifest, ...s.customConnectors];
           const connectors = {
             ...(s.settings.connectors || defaultConnectors),
-            [manifest.id]: { installed: true, enabled: true },
+            [manifest.id]: { installed: true, enabled: false },
           };
           return {
             customConnectors,
@@ -321,7 +357,8 @@ export const useLeadsStore = create<State>()(
 
         return { leadId: activeLead.id, threadId: targetThreadId };
       },
-      updateOutcome: (id, outcome) =>
+      updateOutcome: (id, outcome) => {
+        const lead = get().leads.find((l) => l.id === id);
         set((s) => ({
           leads: s.leads.map((l) => (l.id === id ? { ...l, outcome } : l)),
           activities: [
@@ -334,11 +371,29 @@ export const useLeadsStore = create<State>()(
             },
             ...s.activities,
           ],
-        })),
-      updateLeadMessage: (id, message) =>
+        }));
+        if (lead) {
+          persistRepo(async (repo) => {
+            await repo.upsertLead({ ...lead, name: lead.name, outcome });
+            await repo.logActivity({
+              leadId: id,
+              type: "note",
+              title: `Outcome: ${outcome ?? "cleared"}`,
+            });
+          });
+        }
+      },
+      updateLeadMessage: (id, message) => {
+        const lead = get().leads.find((l) => l.id === id);
         set((s) => ({
           leads: s.leads.map((l) => (l.id === id ? { ...l, message } : l)),
-        })),
+        }));
+        if (lead) {
+          persistRepo(async (repo) => {
+            await repo.upsertLead({ ...lead, name: lead.name, message });
+          });
+        }
+      },
       regenerateMessage: (id, channel) => {
         const { leads, settings } = get();
         const lead = leads.find((l) => l.id === id);
@@ -381,6 +436,39 @@ export const useLeadsStore = create<State>()(
             },
             ...activities,
           ],
+        });
+        persistRepo(async (repo) => {
+          for (const co of newCompanies) {
+            if (!companies.some((c) => c.id === co.id)) {
+              await repo.upsertCompany({
+                name: co.name,
+                industry: co.industry,
+                size: co.size,
+                country: co.country,
+              });
+            }
+          }
+          const saved: Lead[] = [];
+          for (const lead of scored) {
+            const row = await repo.upsertLead({
+              ...lead,
+              name: lead.name,
+              isDemoSample: false,
+            });
+            saved.push(row);
+          }
+          await repo.logActivity({
+            type: "import",
+            title: `Imported ${scored.length} leads`,
+          });
+          if (saved.length) {
+            set((s) => ({
+              leads: [
+                ...saved,
+                ...s.leads.filter((l) => !scored.some((x) => x.id === l.id)),
+              ],
+            }));
+          }
         });
         return { count: scored.length, errors };
       },
@@ -428,6 +516,24 @@ export const useLeadsStore = create<State>()(
             ...s.activities,
           ],
         }));
+        persistRepo(async (repo) => {
+          const saved = await repo.sendMessage({
+            threadId,
+            direction: "out",
+            body: body.trim(),
+            channel: thread.channel,
+            at,
+          });
+          await repo.logActivity({
+            leadId: thread.leadId,
+            type: "message_sent",
+            title: "Outbound message sent",
+            detail: body.trim().slice(0, 80),
+          });
+          set((s) => ({
+            messages: s.messages.map((m) => (m.id === msg.id ? saved : m)),
+          }));
+        });
       },
       markThreadRead: (threadId) =>
         set((s) => ({
@@ -491,6 +597,43 @@ export const useLeadsStore = create<State>()(
             ...activities,
           ],
         });
+        persistRepo(async (repo) => {
+          const thread = await repo.upsertThread({
+            leadId,
+            channel: ch,
+            subject,
+            unread: 0,
+            updatedAt: out.at,
+          });
+          await repo.sendMessage({
+            threadId: thread.id,
+            direction: "system",
+            body: sys.body,
+            channel: ch,
+            at,
+          });
+          const savedOut = await repo.sendMessage({
+            threadId: thread.id,
+            direction: "out",
+            body: firstBody,
+            channel: ch,
+            at: out.at,
+          });
+          await repo.logActivity({
+            leadId,
+            type: "message_sent",
+            title: "New conversation started",
+            detail: subject,
+          });
+          set((s) => ({
+            threads: s.threads.map((t) => (t.id === id ? { ...thread } : t)),
+            messages: [
+              ...s.messages.filter((m) => m.threadId !== id),
+              { ...sys, threadId: thread.id },
+              { ...savedOut, threadId: thread.id },
+            ],
+          }));
+        });
         return id;
       },
       updateDealStage: (dealId, stage) => {
@@ -513,13 +656,28 @@ export const useLeadsStore = create<State>()(
             ...s.activities,
           ],
         }));
+        persistRepo(async (repo) => {
+          await repo.updateDealStage(dealId, stage);
+          await repo.logActivity({
+            leadId: deal.leadId,
+            type: "stage_change",
+            title: `Deal moved to ${stage}`,
+            detail: deal.title,
+          });
+        });
       },
-      toggleTask: (taskId) =>
+      toggleTask: (taskId) => {
+        const task = get().tasks.find((t) => t.id === taskId);
+        const nextDone = task ? !task.done : true;
         set((s) => ({
           tasks: s.tasks.map((t) =>
             t.id === taskId ? { ...t, done: !t.done } : t
           ),
-        })),
+        }));
+        persistRepo(async (repo) => {
+          await repo.toggleTask(taskId, nextDone);
+        });
+      },
       addTask: (task) =>
         set((s) => ({
           tasks: [...s.tasks, { ...task, id: uid("task") }],
@@ -531,17 +689,33 @@ export const useLeadsStore = create<State>()(
     }),
     {
       name: "leadpilot-crm-v3",
-      partialize: (s) => ({
-        companies: s.companies,
-        leads: s.leads,
-        threads: s.threads,
-        messages: s.messages,
-        deals: s.deals,
-        tasks: s.tasks,
-        activities: s.activities,
-        settings: s.settings,
-        customConnectors: s.customConnectors,
-      }),
+      partialize: (s) => {
+        // Signed-in workspace lives in Supabase — only keep language/local prefs
+        if (s.dataBackend === "supabase") {
+          return {
+            settings: {
+              language: s.settings.language,
+              companyName: s.settings.companyName,
+              voice: s.settings.voice,
+              productPitch: s.settings.productPitch,
+            },
+            customConnectors: s.customConnectors,
+            dataBackend: s.dataBackend,
+          };
+        }
+        return {
+          companies: s.companies,
+          leads: s.leads,
+          threads: s.threads,
+          messages: s.messages,
+          deals: s.deals,
+          tasks: s.tasks,
+          activities: s.activities,
+          settings: s.settings,
+          customConnectors: s.customConnectors,
+          dataBackend: s.dataBackend,
+        };
+      },
       onRehydrateStorage: () => (state, err) => {
         if (err) {
           console.error("LeadPilot rehydrate failed", err);

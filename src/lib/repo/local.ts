@@ -1,5 +1,7 @@
 import type {
   Activity,
+  ApiKeyRecord,
+  Channel,
   ChatMessage,
   Company,
   CompanySettings,
@@ -195,6 +197,32 @@ export class LocalDeskRepository implements DeskRepository {
     return this.threads.find((t) => t.id === threadId) ?? null;
   }
 
+  async upsertThread(
+    thread: Partial<Thread> & { leadId: string; channel: Channel }
+  ): Promise<Thread> {
+    const existing = thread.id
+      ? this.threads.find((t) => t.id === thread.id)
+      : this.threads.find(
+          (t) => t.leadId === thread.leadId && t.channel === thread.channel
+        );
+    if (existing) {
+      Object.assign(existing, thread, { updatedAt: thread.updatedAt || now() });
+      return existing;
+    }
+    const created: Thread = {
+      id: thread.id || id(),
+      leadId: thread.leadId,
+      channel: thread.channel,
+      subject: thread.subject || "Conversation",
+      updatedAt: thread.updatedAt || now(),
+      unread: thread.unread ?? 0,
+      createdAt: now(),
+      workspaceId: thread.workspaceId,
+    };
+    this.threads.unshift(created);
+    return created;
+  }
+
   async listMessages(threadId: string): Promise<ChatMessage[]> {
     return this.messages
       .filter((m) => m.threadId === threadId)
@@ -323,5 +351,76 @@ export class LocalDeskRepository implements DeskRepository {
       this.settings.plugins = plugins;
     }
     return next;
+  }
+
+  private apiKeys: ApiKeyRecord[] = [];
+  private connectors: Map<string, { connectorId: string; enabled: boolean; secrets: Record<string, unknown> }> = new Map();
+
+  async listApiKeys(): Promise<ApiKeyRecord[]> {
+    return [...(this.settings.apiKeys || this.apiKeys)];
+  }
+
+  async createApiKey(input: {
+    name: string;
+    prefix: string;
+    hashedKey: string;
+  }): Promise<ApiKeyRecord> {
+    const record: ApiKeyRecord = {
+      id: id(),
+      name: input.name,
+      prefix: input.prefix,
+      hashedKey: input.hashedKey,
+      createdAt: now(),
+    };
+    this.apiKeys.unshift(record);
+    this.settings.apiKeys = [record, ...(this.settings.apiKeys || [])];
+    return record;
+  }
+
+  async revokeApiKey(keyId: string): Promise<boolean> {
+    const before = (this.settings.apiKeys || []).length;
+    this.settings.apiKeys = (this.settings.apiKeys || []).filter((k) => k.id !== keyId);
+    this.apiKeys = this.apiKeys.filter((k) => k.id !== keyId);
+    return (this.settings.apiKeys?.length ?? 0) < before;
+  }
+
+  async listConnectorInstalls(): Promise<
+    { connectorId: string; enabled: boolean; secrets: Record<string, unknown> }[]
+  > {
+    const fromSettings = Object.entries(this.settings.connectors || {}).map(
+      ([connectorId, state]) => ({
+        connectorId,
+        enabled: Boolean(state.enabled),
+        secrets: (state.config || {}) as Record<string, unknown>,
+      })
+    );
+    if (fromSettings.length) return fromSettings;
+    return Array.from(this.connectors.values());
+  }
+
+  async setConnectorEnabled(
+    connectorId: string,
+    enabled: boolean,
+    secrets?: Record<string, unknown>
+  ): Promise<void> {
+    const current = this.settings.connectors || {};
+    const entry = current[connectorId] || { installed: true, enabled: false };
+    this.settings.connectors = {
+      ...current,
+      [connectorId]: {
+        ...entry,
+        installed: true,
+        enabled,
+        config: {
+          ...(entry.config || {}),
+          ...((secrets || {}) as Record<string, string | boolean>),
+        },
+      },
+    };
+    this.connectors.set(connectorId, {
+      connectorId,
+      enabled,
+      secrets: secrets || {},
+    });
   }
 }

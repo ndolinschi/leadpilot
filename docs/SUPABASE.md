@@ -10,7 +10,7 @@ LeadPilot uses Supabase for Auth, Postgres (RLS multi-tenant), and Realtime.
 | Project id | `xxyhztviztdhvjzdfdmb` |
 | URL | `https://xxyhztviztdhvjzdfdmb.supabase.co` |
 | Region | `eu-central-1` |
-| Applied migrations | `0001_init.sql` (+ `0002_rename_modules.sql`: `wp_plugins`→`modules`) |
+| Applied migrations | `0001_init.sql`, `0002_rename_modules.sql` (`wp_plugins`→`modules`), `0003_fix_bootstrap_and_api_keys.sql` |
 
 Tables: `workspaces`, `memberships`, `modules` (install/activate/deactivate; `module_slug`), `companies`, `leads`, `threads`, `messages`, `deals`, `tasks`, `activities`, `connector_installs`, `api_keys`.
 
@@ -137,3 +137,12 @@ Optional server-only: `SUPABASE_SERVICE_ROLE_KEY` (never expose to the browser).
 
 Local secrets live in `/workspace/secrets/leadpilot-supabase.env` and `.env.local` (gitignored). **Do not commit secrets.**
 
+
+
+## 8. API keys (Task money-product)
+
+- Table `api_keys`: `key_prefix` + `key_hash` (SHA-256), soft-revoke via `revoked_at`
+- RPC `verify_api_key(p_key_hash)` — security definer for `/api/v1` without exposing rows
+- Signed-in Workspace → Settings generates keys persisted to Supabase; Demo sample keeps localStorage keys labeled Demo
+
+Migration `0003` also restores `workspaces_insert` (authenticated) required for first-login bootstrap.

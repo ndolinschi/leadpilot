@@ -49,3 +49,11 @@ export function createDeskRepository(opts: CreateRepoOptions = {}): DeskReposito
 export function resolveBackendLabel(repo: DeskRepository): "Demo sample" | "Workspace" {
   return repo.backend === "local" ? "Demo sample" : "Workspace";
 }
+
+export {
+  setActiveDeskRepository,
+  getActiveDeskRepository,
+  onActiveDeskRepositoryChange,
+  persistRepo,
+} from "./active";
+export { hydrateStoreFromRepository, resetStoreToDemoSample } from "./hydrate";

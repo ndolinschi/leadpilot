@@ -331,7 +331,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
       </Sidebar>
 
       <SidebarInset>
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-white/90 px-3 sm:px-4 backdrop-blur">
+        <header className="sticky top-0 z-20 flex h-12 sm:h-14 shrink-0 items-center justify-between gap-1.5 sm:gap-2 border-b border-border bg-white/90 px-2 sm:px-4 backdrop-blur">
           <div className="flex items-center gap-2 min-w-0">
             <SidebarTrigger />
             <span className="font-semibold text-sm truncate text-zinc-900 md:hidden">
@@ -349,7 +349,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
               </Badge>
             )}
             {!auth?.session && (
-              <ButtonLink href="/login" variant="outline" size="sm" className="hidden sm:inline-flex">
+              <ButtonLink href="/login" variant="outline" size="sm" className="h-8 px-2.5 text-xs sm:text-sm sm:px-3">
                 {isRu ? "Войти" : "Sign in"}
               </ButtonLink>
             )}

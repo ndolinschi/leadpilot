@@ -1,5 +1,6 @@
 import type {
   Activity,
+  ApiKeyRecord,
   Channel,
   ChatMessage,
   Company,
@@ -49,6 +50,9 @@ export interface DeskRepository {
 
   listThreads(params?: ListThreadsParams): Promise<Thread[]>;
   getThread(id: string): Promise<Thread | null>;
+  upsertThread(
+    thread: Partial<Thread> & { leadId: string; channel: Channel }
+  ): Promise<Thread>;
   listMessages(threadId: string): Promise<ChatMessage[]>;
   sendMessage(msg: Omit<ChatMessage, "id" | "at"> & { at?: string }): Promise<ChatMessage>;
 
@@ -74,4 +78,23 @@ export interface DeskRepository {
     status: PluginInstallStatus,
     config?: Record<string, unknown>
   ): Promise<PluginInstall>;
+
+  /** API keys (hashed at rest) */
+  listApiKeys(): Promise<ApiKeyRecord[]>;
+  createApiKey(input: {
+    name: string;
+    prefix: string;
+    hashedKey: string;
+  }): Promise<ApiKeyRecord>;
+  revokeApiKey(id: string): Promise<boolean>;
+
+  /** Connector installs */
+  listConnectorInstalls(): Promise<
+    { connectorId: string; enabled: boolean; secrets: Record<string, unknown> }[]
+  >;
+  setConnectorEnabled(
+    connectorId: string,
+    enabled: boolean,
+    secrets?: Record<string, unknown>
+  ): Promise<void>;
 }

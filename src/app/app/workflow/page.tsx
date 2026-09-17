@@ -22,8 +22,8 @@ export default function WorkflowPage() {
             <h1 className="text-2xl font-semibold tracking-tight">
               {isRu ? "Автоматизация и роутинг" : "Workflow Automation"}
             </h1>
-            <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
-              {isRu ? "Правила активны" : "Active Routing"}
+            <Badge variant="outline" className="border-zinc-200 bg-zinc-50 text-zinc-600">
+              {isRu ? "Модуль" : "Module"}
             </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -131,7 +131,7 @@ export default function WorkflowPage() {
           </div>
           <div className="mt-4 flex justify-end">
             <ButtonLink href="/app/inbox" size="sm">
-              {isRu ? "Перейти в демо Inbox" : "Try Active Inbox Demo"}
+              {isRu ? "Открыть диалоги" : "Open Conversations"}
             </ButtonLink>
           </div>
         </CardContent>

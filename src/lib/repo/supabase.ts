@@ -20,6 +20,23 @@ import type {
 } from "@leadpilot/core";
 import { DEFAULT_PLUGINS, mergePlugins, runPluginHooks } from "@leadpilot/core";
 
+
+function toDbDirection(d: string): string {
+  if (d === "in" || d === "inbound") return "inbound";
+  if (d === "out" || d === "outbound") return "outbound";
+  return "system";
+}
+
+function fromDbDirection(d: string): "in" | "out" | "system" {
+  if (d === "inbound" || d === "in") return "in";
+  if (d === "outbound" || d === "out") return "out";
+  return "system";
+}
+
+function toDbPluginStatus(status: string): "active" | "inactive" {
+  return status === "active" ? "active" : "inactive";
+}
+
 type LeadRow = {
   id: string;
   workspace_id: string;
@@ -292,7 +309,7 @@ export class SupabaseDeskRepository implements DeskRepository {
       (r): Thread => ({
         id: r.id,
         workspaceId: r.workspace_id,
-        leadId: r.lead_id,
+        leadId: r.lead_id || "",
         channel: r.channel as Channel,
         subject: r.subject,
         updatedAt: r.updated_at,
@@ -316,8 +333,63 @@ export class SupabaseDeskRepository implements DeskRepository {
     return {
       id: data.id,
       workspaceId: data.workspace_id,
-      leadId: data.lead_id,
+      leadId: data.lead_id || "",
       channel: data.channel as Channel,
+      subject: data.subject,
+      updatedAt: data.updated_at,
+      unread: data.unread ?? 0,
+      createdAt: data.created_at,
+    };
+  }
+
+  async upsertThread(
+    thread: Partial<Thread> & { leadId: string; channel: import("@leadpilot/core").Channel }
+  ): Promise<Thread> {
+    const at = thread.updatedAt || new Date().toISOString();
+    if (thread.id) {
+      const { data, error } = await this.client
+        .from("threads")
+        .update({
+          lead_id: thread.leadId,
+          channel: thread.channel,
+          subject: thread.subject ?? null,
+          unread: thread.unread ?? 0,
+          updated_at: at,
+        })
+        .eq("id", thread.id)
+        .eq("workspace_id", this.workspaceId)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        leadId: data.lead_id || "",
+        channel: data.channel as import("@leadpilot/core").Channel,
+        subject: data.subject,
+        updatedAt: data.updated_at,
+        unread: data.unread ?? 0,
+        createdAt: data.created_at,
+      };
+    }
+    const { data, error } = await this.client
+      .from("threads")
+      .insert({
+        workspace_id: this.workspaceId,
+        lead_id: thread.leadId,
+        channel: thread.channel,
+        subject: thread.subject ?? null,
+        unread: thread.unread ?? 0,
+        updated_at: at,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return {
+      id: data.id,
+      workspaceId: data.workspace_id,
+      leadId: data.lead_id || "",
+      channel: data.channel as import("@leadpilot/core").Channel,
       subject: data.subject,
       updatedAt: data.updated_at,
       unread: data.unread ?? 0,
@@ -339,7 +411,7 @@ export class SupabaseDeskRepository implements DeskRepository {
         id: r.id,
         workspaceId: r.workspace_id,
         threadId: r.thread_id,
-        direction: r.direction,
+        direction: fromDbDirection(r.direction),
         body: r.body,
         at: r.at,
         channel: (meta.channel as Channel) || "email",
@@ -357,7 +429,7 @@ export class SupabaseDeskRepository implements DeskRepository {
       .insert({
         workspace_id: this.workspaceId,
         thread_id: msg.threadId,
-        direction: msg.direction,
+        direction: toDbDirection(msg.direction),
         body: msg.body,
         at,
         meta: { channel: msg.channel, attachment: msg.attachment },
@@ -374,7 +446,7 @@ export class SupabaseDeskRepository implements DeskRepository {
       id: data.id,
       workspaceId: data.workspace_id,
       threadId: data.thread_id,
-      direction: data.direction,
+      direction: fromDbDirection(data.direction),
       body: data.body,
       at: data.at,
       channel: msg.channel,
@@ -391,7 +463,7 @@ export class SupabaseDeskRepository implements DeskRepository {
     return (data || []).map((r) => ({
       id: r.id,
       workspaceId: r.workspace_id,
-      leadId: r.lead_id,
+      leadId: r.lead_id || "",
       title: r.title,
       value: Number(r.amount ?? 0),
       stage: r.stage as DealStage,
@@ -412,7 +484,7 @@ export class SupabaseDeskRepository implements DeskRepository {
     return {
       id: data.id,
       workspaceId: data.workspace_id,
-      leadId: data.lead_id,
+      leadId: data.lead_id || "",
       title: data.title,
       value: Number(data.amount ?? 0),
       stage: data.stage as DealStage,
@@ -437,7 +509,7 @@ export class SupabaseDeskRepository implements DeskRepository {
     return {
       id: data.id,
       workspaceId: data.workspace_id,
-      leadId: data.lead_id,
+      leadId: data.lead_id || "",
       title: data.title,
       value: Number(data.amount ?? 0),
       stage: data.stage as DealStage,
@@ -562,14 +634,24 @@ export class SupabaseDeskRepository implements DeskRepository {
         plugins[inst.pluginId as PluginId] = inst.status === "active";
       }
     }
+    const apiKeys = await this.listApiKeys();
+    const connectorRows = await this.listConnectorInstalls();
+    const connectors: CompanySettings["connectors"] = {};
+    for (const c of connectorRows) {
+      connectors[c.connectorId] = {
+        installed: true,
+        enabled: c.enabled,
+        config: c.secrets as Record<string, string | boolean>,
+      };
+    }
     return {
       companyName: "Workspace",
       voice: "professional",
       language: "en",
       productPitch: "",
       plugins: mergePlugins(plugins),
-      apiKeys: [],
-      connectors: {},
+      apiKeys,
+      connectors,
     };
   }
 
@@ -636,12 +718,13 @@ export class SupabaseDeskRepository implements DeskRepository {
     });
 
     const existing = await this.getPluginInstall(slug);
+    const dbStatus = toDbPluginStatus(status);
     const row = {
       workspace_id: this.workspaceId,
       module_slug: slug,
-      status,
+      status: dbStatus,
       config: { ...(existing?.config || {}), ...(config || {}) },
-      activated_at: status === "active" ? new Date().toISOString() : null,
+      activated_at: dbStatus === "active" ? new Date().toISOString() : null,
     };
 
     const { data, error } = await this.client
@@ -659,5 +742,93 @@ export class SupabaseDeskRepository implements DeskRepository {
       activatedAt: data.activated_at,
       createdAt: data.created_at,
     };
+  }
+
+  async listApiKeys(): Promise<import("@leadpilot/core").ApiKeyRecord[]> {
+    const { data, error } = await this.client
+      .from("api_keys")
+      .select("*")
+      .eq("workspace_id", this.workspaceId)
+      .is("revoked_at", null)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data || []).map((r) => ({
+      id: r.id,
+      workspaceId: r.workspace_id,
+      name: r.name,
+      prefix: r.key_prefix,
+      hashedKey: r.key_hash,
+      createdAt: r.created_at,
+      deletedAt: r.revoked_at,
+    }));
+  }
+
+  async createApiKey(input: {
+    name: string;
+    prefix: string;
+    hashedKey: string;
+  }): Promise<import("@leadpilot/core").ApiKeyRecord> {
+    const { data, error } = await this.client
+      .from("api_keys")
+      .insert({
+        workspace_id: this.workspaceId,
+        name: input.name,
+        key_prefix: input.prefix,
+        key_hash: input.hashedKey,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return {
+      id: data.id,
+      workspaceId: data.workspace_id,
+      name: data.name,
+      prefix: data.key_prefix,
+      hashedKey: data.key_hash,
+      createdAt: data.created_at,
+    };
+  }
+
+  async revokeApiKey(keyId: string): Promise<boolean> {
+    const { error, count } = await this.client
+      .from("api_keys")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("id", keyId)
+      .eq("workspace_id", this.workspaceId)
+      .is("revoked_at", null);
+    if (error) throw error;
+    return true;
+  }
+
+  async listConnectorInstalls(): Promise<
+    { connectorId: string; enabled: boolean; secrets: Record<string, unknown> }[]
+  > {
+    const { data, error } = await this.client
+      .from("connector_installs")
+      .select("*")
+      .eq("workspace_id", this.workspaceId);
+    if (error) throw error;
+    return (data || []).map((r) => ({
+      connectorId: r.connector_id,
+      enabled: Boolean(r.enabled),
+      secrets: (r.secrets || {}) as Record<string, unknown>,
+    }));
+  }
+
+  async setConnectorEnabled(
+    connectorId: string,
+    enabled: boolean,
+    secrets?: Record<string, unknown>
+  ): Promise<void> {
+    const row: Record<string, unknown> = {
+      workspace_id: this.workspaceId,
+      connector_id: connectorId,
+      enabled,
+    };
+    if (secrets) row.secrets = secrets;
+    const { error } = await this.client
+      .from("connector_installs")
+      .upsert(row, { onConflict: "workspace_id,connector_id" });
+    if (error) throw error;
   }
 }
