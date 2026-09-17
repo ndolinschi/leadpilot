@@ -29,7 +29,7 @@ const en = {
     heroBadge: "Client Operations Desk · Find → Score → Talk → Verdict",
     heroTitle: "End-to-end platform for client processing and call-center queues",
     heroSub: "For digital agencies, dental & health clinics, microfinance banks, and e-commerce support desks drowning in Facebook Lead Ads, Viber, and phone calls: one unified queue, priority who to answer first, talk in omnichannel chat, and mark instant verdicts.",
-    ctaDemo: "Open Live Queue & Conversations",
+    ctaDemo: "Open Demo Queue & Conversations",
     ctaHow: "How it works",
     ctaModules: "Explore Marketplace",
     problemTitle: "Drowning Across Facebook, Viber & Phone Lines",
@@ -153,6 +153,7 @@ const en = {
     recentChats: "Recent conversations",
     openInbox: "Open conversations",
     viewAll: "View all",
+    demoSample: "Demo sample",
   },
   inbox: {
     title: "Conversations",
@@ -290,7 +291,7 @@ const en = {
   },
   marketplacePage: {
     title: "Connector Marketplace",
-    subtitle: "Production channel connectors & modules for client processing. Manage webhooks, tokens, and custom JSON packages.",
+    subtitle: "Channel connectors and modules for client processing. Manage webhooks, tokens, and custom JSON packages. Seeded data is labeled Demo sample.",
     installedBadge: "Installed",
     enabledBadge: "Enabled",
     disabledBadge: "Disabled",
@@ -542,6 +543,7 @@ const ru: Dict = {
     recentChats: "Недавние диалоги",
     openInbox: "Открыть диалоги",
     viewAll: "Все",
+    demoSample: "Демо-выборка",
   },
   inbox: {
     title: "Диалоги",

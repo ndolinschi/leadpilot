@@ -184,6 +184,11 @@ export default function LeadDetailPage({
           </ButtonLink>
           <div className="hidden sm:block h-4 w-px bg-zinc-300" />
           <div className="flex items-center gap-2">
+            {lead.isDemoSample && (
+              <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800 text-[10px]">
+                {i18n.app.demoSample}
+              </Badge>
+            )}
             <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
               {i18n.detail.verdictTitle}:
             </span>

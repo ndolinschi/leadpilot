@@ -15,7 +15,8 @@ import {
   Settings,
   Store,
   Code2,
-  type LucideIcon,
+  GitBranch,
+  Megaphone,
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
@@ -40,7 +41,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  PLUGIN_REGISTRY,
   mergePlugins,
   isPluginEnabled,
   type PluginId,
@@ -84,9 +84,10 @@ function ShellInner({ children }: { children: React.ReactNode }) {
       { prefix: "/app/tasks", id: "tasks" },
       { prefix: "/app/metrics", id: "metrics" },
       { prefix: "/app/import", id: "import" },
+      { prefix: "/app/workflow", id: "workflow" },
+      { prefix: "/app/campaign", id: "campaign" },
     ];
     for (const m of map) {
-      const def = PLUGIN_REGISTRY.find((p) => p.id === m.id);
       if (pathname.startsWith(m.prefix) && !isPluginEnabled(plugins, m.id)) {
         router.replace("/app");
         break;
@@ -218,6 +219,32 @@ function ShellInner({ children }: { children: React.ReactNode }) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
+
+                {isPluginEnabled(plugins, "workflow") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={isActive("/app/workflow")}
+                      tooltip={i18n.nav.workflow}
+                      onClick={() => navigate("/app/workflow")}
+                    >
+                      <GitBranch />
+                      <span>{i18n.nav.workflow}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
+                {isPluginEnabled(plugins, "campaign") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={isActive("/app/campaign")}
+                      tooltip={i18n.nav.campaign}
+                      onClick={() => navigate("/app/campaign")}
+                    >
+                      <Megaphone />
+                      <span>{i18n.nav.campaign}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -310,6 +337,9 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800 text-[10px] font-medium">
+              {isRu ? "Демо-выборка" : "Demo sample"}
+            </Badge>
             <LanguageToggle className="flex gap-1" />
           </div>
         </header>

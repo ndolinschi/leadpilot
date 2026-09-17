@@ -218,7 +218,9 @@ export default function MarketplacePage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight">{M.title}</h1>
-            <Badge className="bg-[#266df0] text-white">Production</Badge>
+            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
+              {isRu ? "Демо-выборка" : "Demo sample"}
+            </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">{M.subtitle}</p>
         </div>

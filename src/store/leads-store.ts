@@ -21,7 +21,7 @@ import { CRM_SEED } from "@/lib/seed-crm";
 import { applyScore } from "@/lib/score";
 import { generateMessage } from "@/lib/messages";
 import { parseLeadsCsv } from "@/lib/csv";
-import { DEFAULT_PLUGINS, mergePlugins, type PluginId } from "@/lib/plugins";
+import { DEFAULT_PLUGINS, getPlugin, mergePlugins, type PluginId } from "@/lib/plugins";
 import { activatePlugin, deactivatePlugin } from "@/lib/plugins/wp-activate";
 import { activateConnector, deactivateConnector } from "@/lib/connectors/registry";
 import type { ConnectorManifest } from "@/lib/connectors/types";
@@ -192,6 +192,10 @@ export const useLeadsStore = create<State>()(
         });
       },
       setPluginEnabled: (id, enabled) => {
+        const manifest = getPlugin(id);
+        if (manifest?.locked && !enabled) {
+          throw new Error(`Plugin "${id}" is required and cannot be deactivated`);
+        }
         // Persist via DeskRepository + wp_plugins lifecycle (local Demo sample today)
         const repo = new LocalDeskRepository({
           settings: get().settings,

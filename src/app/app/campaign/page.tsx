@@ -2,6 +2,7 @@
 
 import { Megaphone, Mail, MessageSquare, Send, Layers } from "lucide-react";
 import { ButtonLink } from "@/components/button-link";
+import { PluginGate } from "@/components/plugin-gate";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLeadsStore } from "@/store/leads-store";
@@ -13,6 +14,7 @@ export default function CampaignPage() {
   const isRu = lang === "ru";
 
   return (
+    <PluginGate id="campaign">
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -147,11 +149,12 @@ export default function CampaignPage() {
 
           <div className="mt-4 flex justify-end">
             <ButtonLink href="/app/inbox" size="sm">
-              {isRu ? "Открыть входящие сообщения" : "Open Live Inbox"}
+              {isRu ? "Открыть диалоги" : "Open Conversations"}
             </ButtonLink>
           </div>
         </CardContent>
       </Card>
     </div>
+    </PluginGate>
   );
 }

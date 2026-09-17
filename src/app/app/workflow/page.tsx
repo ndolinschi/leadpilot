@@ -2,6 +2,7 @@
 
 import { GitBranch, Sparkles, Clock, CheckCircle2, ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/button-link";
+import { PluginGate } from "@/components/plugin-gate";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLeadsStore } from "@/store/leads-store";
@@ -13,6 +14,7 @@ export default function WorkflowPage() {
   const isRu = lang === "ru";
 
   return (
+    <PluginGate id="workflow">
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -135,5 +137,6 @@ export default function WorkflowPage() {
         </CardContent>
       </Card>
     </div>
+    </PluginGate>
   );
 }

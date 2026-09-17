@@ -119,12 +119,19 @@ export default function DashboardPage() {
           const lead = row.original;
           return (
             <div>
-              <Link
-                href={`/app/leads/${lead.id}`}
-                className="font-medium hover:underline"
-              >
-                {lead.name}
-              </Link>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Link
+                  href={`/app/leads/${lead.id}`}
+                  className="font-medium hover:underline"
+                >
+                  {lead.name}
+                </Link>
+                {lead.isDemoSample && (
+                  <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800 text-[10px]">
+                    {i18n.app.demoSample}
+                  </Badge>
+                )}
+              </div>
               <div className="text-xs text-muted-foreground">
                 {lead.country} · {lead.industry}
               </div>
