@@ -170,26 +170,98 @@ export default function LeadDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-<ButtonLink href="/app/leads" variant="ghost" size="sm" className="inline-flex items-center gap-1.5"><ArrowLeft className="size-4" />{i18n.nav.leads}</ButtonLink>
-        <div className="flex flex-wrap gap-2">
-          {lead.outcome && (
-            <Badge variant="secondary" className="capitalize">
-              {lead.outcome.replace("_", " ")}
-            </Badge>
-          )}
+      {/* Prominent Top Verdict & Action Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3.5 shadow-xs">
+        <div className="flex flex-wrap items-center gap-3">
+          <ButtonLink
+            href="/app/leads"
+            variant="ghost"
+            size="sm"
+            className="inline-flex items-center gap-1.5 text-zinc-600"
+          >
+            <ArrowLeft className="size-4" />
+            {i18n.nav.leads}
+          </ButtonLink>
+          <div className="hidden sm:block h-4 w-px bg-zinc-300" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              {i18n.detail.verdictTitle}:
+            </span>
+            {lead.outcome ? (
+              <Badge
+                className={
+                  lead.outcome === "won"
+                    ? "bg-emerald-600 text-white capitalize hover:bg-emerald-600"
+                    : lead.outcome === "lost"
+                    ? "bg-rose-600 text-white capitalize hover:bg-rose-600"
+                    : "bg-amber-600 text-white capitalize hover:bg-amber-600"
+                }
+              >
+                {lead.outcome.replace("_", " ")}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs text-muted-foreground">
+                {lang === "ru" ? "Ожидает вердикта" : "Pending verdict"}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Prominent Won / Lost / No Reply Button Group */}
+          <div className="inline-flex rounded-lg border border-zinc-200 bg-white p-1 shadow-2xs">
+            <Button
+              variant={lead.outcome === "won" ? "default" : "ghost"}
+              size="sm"
+              className={
+                lead.outcome === "won"
+                  ? "h-8 bg-emerald-600 text-xs font-medium text-white hover:bg-emerald-700"
+                  : "h-8 text-xs font-medium text-zinc-700 hover:bg-emerald-50 hover:text-emerald-700"
+              }
+              onClick={() => mark("won")}
+            >
+              <CheckCircle2 className="mr-1.5 size-3.5" />
+              {i18n.detail.won}
+            </Button>
+            <Button
+              variant={lead.outcome === "lost" ? "default" : "ghost"}
+              size="sm"
+              className={
+                lead.outcome === "lost"
+                  ? "h-8 bg-rose-600 text-xs font-medium text-white hover:bg-rose-700"
+                  : "h-8 text-xs font-medium text-zinc-700 hover:bg-rose-50 hover:text-rose-700"
+              }
+              onClick={() => mark("lost")}
+            >
+              <XCircle className="mr-1.5 size-3.5" />
+              {i18n.detail.lost}
+            </Button>
+            <Button
+              variant={lead.outcome === "no_reply" ? "default" : "ghost"}
+              size="sm"
+              className={
+                lead.outcome === "no_reply"
+                  ? "h-8 bg-amber-600 text-xs font-medium text-white hover:bg-amber-700"
+                  : "h-8 text-xs font-medium text-zinc-700 hover:bg-amber-50 hover:text-amber-700"
+              }
+              onClick={() => mark("no_reply")}
+            >
+              <MinusCircle className="mr-1.5 size-3.5" />
+              {i18n.detail.noReply}
+            </Button>
+          </div>
+
           {activeThread ? (
             <ButtonLink
               href={`/app/inbox/${activeThread}`}
               size="sm"
-              variant="outline"
-              className="inline-flex items-center gap-1.5"
+              className="inline-flex h-9 items-center gap-1.5"
             >
               <MessageSquare className="size-3.5" />
               {i18n.detail.openChat}
             </ButtonLink>
           ) : (
-            <Button size="sm" onClick={startChat}>
+            <Button size="sm" onClick={startChat} className="inline-flex h-9 items-center gap-1.5">
               <MessageSquare className="size-3.5" />
               {i18n.detail.startChat}
             </Button>

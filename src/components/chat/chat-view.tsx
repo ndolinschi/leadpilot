@@ -21,7 +21,7 @@ import {
   MessageScrollerItem,
   MessageScrollerButton,
 } from "@/components/ui/message-scroller";
-import { Marker, MarkerContent } from "@/components/ui/marker";
+import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker";
 import {
   Message,
   MessageAvatar,
@@ -248,8 +248,11 @@ export function ChatView({
                       className="py-1"
                     >
                       <div className="flex justify-center">
-                        <Marker className="justify-center">
-                          <MarkerContent className="text-xs text-muted-foreground">
+                        <Marker className="inline-flex w-auto items-center justify-center rounded-full border border-zinc-200/70 bg-zinc-50 px-3 py-1 text-xs text-zinc-600 shadow-xs">
+                          <MarkerIcon className="mr-1 size-3 text-blue-600">
+                            <Sparkles className="size-3 text-blue-600" />
+                          </MarkerIcon>
+                          <MarkerContent className="text-xs text-zinc-600">
                             {item.message.body}
                           </MarkerContent>
                         </Marker>

@@ -14,6 +14,8 @@ import {
   LineChart,
   Upload,
   Settings,
+  Workflow,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
@@ -38,6 +40,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import {
+  PLUGIN_REGISTRY,
   mergePlugins,
   navPlugins,
   isPluginEnabled,
@@ -52,13 +55,15 @@ const ICONS: Record<string, LucideIcon> = {
   tasks: CheckSquare,
   metrics: LineChart,
   import: Upload,
+  workflow: Workflow,
+  campaign: Megaphone,
 };
 
 function pluginNavLabel(
   i18n: ReturnType<typeof t>,
-  key: "leads" | "inbox" | "deals" | "companies" | "tasks" | "metrics" | "import"
+  key: string
 ) {
-  return i18n.nav[key];
+  return (i18n.nav as Record<string, string>)[key] || key;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -82,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return pathname === href || pathname.startsWith(href + "/");
   }
 
-  // Redirect if current route belongs to a disabled plugin
+  // Redirect if current route belongs to a disabled plugin (excluding coming-soon stub pages)
   useEffect(() => {
     const map: { prefix: string; id: PluginId }[] = [
       { prefix: "/app/inbox", id: "inbox" },
@@ -93,8 +98,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       { prefix: "/app/tasks", id: "tasks" },
       { prefix: "/app/metrics", id: "metrics" },
       { prefix: "/app/import", id: "import" },
+      { prefix: "/app/workflow", id: "workflow" },
+      { prefix: "/app/campaign", id: "campaign" },
     ];
     for (const m of map) {
+      const def = PLUGIN_REGISTRY.find((p) => p.id === m.id);
+      if (def?.coming) continue;
       if (pathname.startsWith(m.prefix) && !isPluginEnabled(plugins, m.id)) {
         router.replace("/app");
         break;

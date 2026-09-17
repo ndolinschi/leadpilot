@@ -132,7 +132,9 @@ export type PluginId =
   | "tasks"
   | "metrics"
   | "ai-scoring"
-  | "import";
+  | "import"
+  | "workflow"
+  | "campaign";
 
 export type CompanySettings = {
   companyName: string;

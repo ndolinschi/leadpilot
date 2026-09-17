@@ -1,16 +1,23 @@
 "use client";
 
 import { PluginGate } from "@/components/plugin-gate";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Upload, Download } from "lucide-react";
+import {
+  Upload,
+  Download,
+  FileSpreadsheet,
+  Share2,
+  Bot,
+  Send,
+} from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
 import { SAMPLE_CSV, parseLeadsCsv } from "@/lib/csv";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -75,76 +82,150 @@ export default function ImportPage() {
 
   return (
     <PluginGate id="import">
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {i18n.importPage.title}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {i18n.importPage.subtitle}
-        </p>
-      </div>
-
-      <Card className="border-border/60 bg-card/70 border-dashed">
-        <CardContent className="flex flex-col items-center gap-4 py-12">
-          <div className="flex size-12 items-center justify-center rounded-full bg-[#266df0]/10 text-[#266df0]">
-            <Upload className="size-5" />
-          </div>
-          <input
-            id="csv"
-            type="file"
-            accept=".csv,text/csv"
-            className="hidden"
-            onChange={(e) => onFile(e.target.files?.[0] ?? null)}
-          />
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button render={<label htmlFor="csv" />}>
-              {i18n.importPage.choose}
-            </Button>
-            <Button variant="outline" onClick={downloadSample}>
-              <Download className="size-3.5" />
-              {i18n.importPage.sample}
-            </Button>
-          </div>
-          <p className="max-w-lg text-center text-xs text-muted-foreground">
-            {i18n.importPage.hint}
+      <div className="mx-auto max-w-4xl space-y-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {i18n.importPage.title}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {i18n.importPage.subtitle}
           </p>
-        </CardContent>
-      </Card>
+        </div>
 
-      {preview.length > 0 && (
-        <Card className="border-border/60 bg-card/70">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">{i18n.importPage.preview}</CardTitle>
-            <Button onClick={onImport}>{i18n.importPage.import}</Button>
+        {/* CSV Ingestion Card */}
+        <Card className="border-border/60 bg-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="size-5 text-[#266df0]" />
+                <CardTitle className="text-base">{i18n.importPage.csvActive}</CardTitle>
+              </div>
+              <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
+                Active
+              </Badge>
+            </div>
+            <CardDescription>{i18n.importPage.csvDesc}</CardDescription>
           </CardHeader>
-          <CardContent className="overflow-x-auto p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Score</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {preview.map((r, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{r.name}</TableCell>
-                    <TableCell>{r.company}</TableCell>
-                    <TableCell>{r.email}</TableCell>
-                    <TableCell className="tabular-nums">
-                      {r.score?.toFixed(1)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 p-8 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#266df0]/10 text-[#266df0]">
+                <Upload className="size-5" />
+              </div>
+              <input
+                id="csv"
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+              />
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button render={<label htmlFor="csv" className="cursor-pointer" />}>
+                  {i18n.importPage.choose}
+                </Button>
+                <Button variant="outline" onClick={downloadSample}>
+                  <Download className="size-3.5" />
+                  {i18n.importPage.sample}
+                </Button>
+              </div>
+              <p className="max-w-lg text-center text-xs text-muted-foreground">
+                {i18n.importPage.hint}
+              </p>
+            </div>
           </CardContent>
         </Card>
-      )}
-    </div>
-  </PluginGate>
+
+        {preview.length > 0 && (
+          <Card className="border-border/60 bg-white">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">{i18n.importPage.preview}</CardTitle>
+              <Button onClick={onImport}>{i18n.importPage.import}</Button>
+            </CardHeader>
+            <CardContent className="overflow-x-auto p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Score</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {preview.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{r.name}</TableCell>
+                      <TableCell>{r.company}</TableCell>
+                      <TableCell>{r.email}</TableCell>
+                      <TableCell className="tabular-nums font-medium text-blue-600">
+                        {r.score?.toFixed(1)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Channel Connectors Roadmap Grid */}
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
+              {i18n.importPage.connectorsTitle}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {i18n.importPage.connectorsSubtitle}
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Card className="border-zinc-200 bg-zinc-50/40">
+              <CardHeader className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <Share2 className="size-4 text-blue-600" />
+                  <Badge variant="outline" className="text-[10px] text-zinc-500 border-dashed">
+                    Coming soon
+                  </Badge>
+                </div>
+                <CardTitle className="text-sm pt-1">{i18n.importPage.fbComing}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-1 text-xs text-muted-foreground">
+                {i18n.importPage.fbDesc}
+              </CardContent>
+            </Card>
+
+            <Card className="border-zinc-200 bg-zinc-50/40">
+              <CardHeader className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <Bot className="size-4 text-purple-600" />
+                  <Badge variant="outline" className="text-[10px] text-zinc-500 border-dashed">
+                    Coming soon
+                  </Badge>
+                </div>
+                <CardTitle className="text-sm pt-1">{i18n.importPage.viberComing}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-1 text-xs text-muted-foreground">
+                {i18n.importPage.viberDesc}
+              </CardContent>
+            </Card>
+
+            <Card className="border-zinc-200 bg-zinc-50/40">
+              <CardHeader className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <Send className="size-4 text-sky-600" />
+                  <Badge variant="outline" className="text-[10px] text-zinc-500 border-dashed">
+                    Coming soon
+                  </Badge>
+                </div>
+                <CardTitle className="text-sm pt-1">{i18n.importPage.telegramComing}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-1 text-xs text-muted-foreground">
+                {i18n.importPage.telegramDesc}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </PluginGate>
   );
 }

@@ -187,16 +187,103 @@ export function createCrmSeed(leadCount = 40): CrmSeed {
     });
   });
 
-  // System messages for a couple threads
+  // Special rich seeding for th_001 (first thread)
   if (threads[0]) {
-    messages.push({
-      id: "msg_sys_001",
-      threadId: threads[0].id,
-      direction: "system",
-      body: "Thread opened from ML-recommended channel.",
-      at: hoursAgo(120),
-      channel: threads[0].channel,
-    });
+    const th1 = threads[0];
+    th1.unread = 2;
+    const l1 = leads.find((l) => l.id === th1.leadId) || leads[0];
+
+    // Replace th_001 messages with a curated rich dialogue
+    const th1Msgs: ChatMessage[] = [
+      {
+        id: "msg_sys_001",
+        threadId: th1.id,
+        direction: "system",
+        body: "Channels / Import: Inbound captured from high-intent form · Channel: " + th1.channel,
+        at: hoursAgo(72),
+        channel: th1.channel,
+      },
+      {
+        id: "msg_sys_002",
+        threadId: th1.id,
+        direction: "system",
+        body: `AI Scoring: Priority ${(l1.score ?? 94.2).toFixed(1)}/100 · Softmax recommended ${th1.channel} · Intent: High`,
+        at: hoursAgo(71),
+        channel: th1.channel,
+      },
+      {
+        id: `msg_${th1.id}_1`,
+        threadId: th1.id,
+        direction: "out",
+        body: `Hi ${l1.name.split(" ")[0]}, noticed ${l1.company} is scaling outbound routine — we help teams prioritize the top 20% of leads that actually convert. Open to a quick look?`,
+        at: hoursAgo(70),
+        channel: th1.channel,
+        attachment: {
+          name: "LeadPilot_Product_Overview.pdf",
+          size: "2.4 MB",
+          type: "pdf",
+        },
+      },
+      {
+        id: `msg_${th1.id}_2`,
+        threadId: th1.id,
+        direction: "in",
+        body: "Thanks! We're evaluating tools this quarter to replace our call-center routine. Can you share security compliance and typical time-to-value?",
+        at: hoursAgo(48),
+        channel: th1.channel,
+      },
+      {
+        id: "msg_sys_003",
+        threadId: th1.id,
+        direction: "system",
+        body: "AI suggested: ask for budget, share security one-pager, and propose 15-min walkthrough.",
+        at: hoursAgo(47),
+        channel: th1.channel,
+      },
+      {
+        id: `msg_${th1.id}_3`,
+        threadId: th1.id,
+        direction: "out",
+        body: "Definitely! Attaching our SOC2 compliance overview and deployment guide. We usually go from CSV ingestion to live scoring in under 60 seconds. Free Thursday at 2 PM?",
+        at: hoursAgo(24),
+        channel: th1.channel,
+        attachment: {
+          name: "SOC2_Security_Overview.pdf",
+          size: "1.6 MB",
+          type: "pdf",
+        },
+      },
+      {
+        id: `msg_${th1.id}_4`,
+        threadId: th1.id,
+        direction: "in",
+        body: "Thursday 2 PM works for our team. Attaching our vendor onboarding checklist — looking forward to comparing notes.",
+        at: hoursAgo(2),
+        channel: th1.channel,
+        attachment: {
+          name: "Vendor_Security_Checklist.pdf",
+          size: "940 KB",
+          type: "pdf",
+        },
+      },
+      {
+        id: "msg_sys_004",
+        threadId: th1.id,
+        direction: "system",
+        body: "AI suggested: calendar invite sent · Recommended verdict: Qualified / In Proposal.",
+        at: hoursAgo(1.5),
+        channel: th1.channel,
+      },
+    ];
+
+    // Remove old th_001 messages and push curated ones
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].threadId === th1.id) {
+        messages.splice(i, 1);
+      }
+    }
+    messages.push(...th1Msgs);
+    th1.updatedAt = hoursAgo(1.5);
   }
 
   // 12 deals across stages

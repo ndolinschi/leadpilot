@@ -6,7 +6,9 @@ export type PluginId =
   | "tasks"
   | "metrics"
   | "ai-scoring"
-  | "import";
+  | "import"
+  | "workflow"
+  | "campaign";
 
 export type PluginDef = {
   id: PluginId;
@@ -24,8 +26,12 @@ export type PluginDef = {
     | "companies"
     | "tasks"
     | "metrics"
-    | "import";
+    | "import"
+    | "workflow"
+    | "campaign";
   group: "crm" | "system" | "ai";
+  coming?: boolean;
+  icon?: string;
   locked?: boolean;
 };
 
@@ -35,22 +41,25 @@ export const PLUGIN_REGISTRY: PluginDef[] = [
     labelKey: "inbox",
     painEn: "Too many tools — CRM + email + LinkedIn + notes in separate tabs.",
     painRu: "Слишком много инструментов — CRM, почта, LinkedIn и заметки в разных вкладках.",
-    descriptionEn: "Unified inbox: every channel thread in one place so SDRs stop context-switching.",
-    descriptionRu: "Единый inbox: все каналы в одном месте — без переключения между инструментами.",
+    descriptionEn: "Unified inbox: every channel thread in one place with AI reply assist so reps stop context-switching.",
+    descriptionRu: "Единый inbox: все каналы в одном месте с AI-ассистентом ответов — без переключения между окнами.",
     href: "/app/inbox",
     navKey: "inbox",
     group: "crm",
+    icon: "inbox",
   },
   {
     id: "leads",
     labelKey: "leads",
     painEn: "Leads pile up chronologically; hot buyers wait behind cold ones.",
     painRu: "Лиды копятся хронологически; горячие ждут за холодными.",
-    descriptionEn: "Ranked lead list with filters — work the queue by intent, not FIFO.",
-    descriptionRu: "Ранжированный список с фильтрами — очередь по intent, не FIFO.",
+    descriptionEn: "Ranked lead database with filters — work the queue by intent, not FIFO.",
+    descriptionRu: "Ранжированная база лидов с фильтрами — очередь по intent, не FIFO.",
     href: "/app/leads",
     navKey: "leads",
     group: "crm",
+    icon: "leads",
+    locked: true,
   },
   {
     id: "ai-scoring",
@@ -60,17 +69,31 @@ export const PLUGIN_REGISTRY: PluginDef[] = [
     descriptionEn: "ML priority score, best-channel recommendation, explainability, and personalized first-touch / chat AI composer. On by default.",
     descriptionRu: "ML-приоритет, лучший канал, объяснимость и персональный AI-composer. Включён по умолчанию.",
     group: "ai",
+    icon: "ai-scoring",
   },
   {
     id: "deals",
     labelKey: "deals",
     painEn: "Pipeline chaos — stages live in spreadsheets and Slack threads.",
     painRu: "Хаос в воронке — стадии в таблицах и Slack.",
-    descriptionEn: "Kanban deals board with drag-and-drop stages to keep pipeline honest.",
-    descriptionRu: "Kanban сделок drag-and-drop — честная воронка без хаоса.",
+    descriptionEn: "Kanban deals board with drag-and-drop stages and instant outcome verdicts.",
+    descriptionRu: "Kanban сделок drag-and-drop — честная воронка и моментальные вердикты.",
     href: "/app/deals",
     navKey: "deals",
     group: "crm",
+    icon: "deals",
+  },
+  {
+    id: "import",
+    labelKey: "import",
+    painEn: "Leads scattered across CSV files, Facebook lead ads, Telegram, and Viber channels.",
+    painRu: "Лиды раскиданы по CSV-файлам, лид-формам Facebook, Telegram и Viber.",
+    descriptionEn: "Channels & Ingestion: CSV today; Facebook Leads, Viber, and Telegram connectors coming next.",
+    descriptionRu: "Каналы и захват: CSV сегодня; Facebook Leads, Viber и Telegram — в разработке.",
+    href: "/app/import",
+    navKey: "import",
+    group: "system",
+    icon: "import",
   },
   {
     id: "companies",
@@ -82,6 +105,7 @@ export const PLUGIN_REGISTRY: PluginDef[] = [
     href: "/app/companies",
     navKey: "companies",
     group: "crm",
+    icon: "companies",
   },
   {
     id: "tasks",
@@ -93,6 +117,7 @@ export const PLUGIN_REGISTRY: PluginDef[] = [
     href: "/app/tasks",
     navKey: "tasks",
     group: "crm",
+    icon: "tasks",
   },
   {
     id: "metrics",
@@ -104,17 +129,33 @@ export const PLUGIN_REGISTRY: PluginDef[] = [
     href: "/app/metrics",
     navKey: "metrics",
     group: "system",
+    icon: "metrics",
   },
   {
-    id: "import",
-    labelKey: "import",
-    painEn: "New lists land in CSV and sit unscored for days.",
-    painRu: "Новые списки в CSV лежат днями без скоринга.",
-    descriptionEn: "CSV import that scores every row on the way in.",
-    descriptionRu: "CSV-импорт со скорингом каждой строки при загрузке.",
-    href: "/app/import",
-    navKey: "import",
+    id: "workflow",
+    labelKey: "workflow",
+    painEn: "Manual routing is slow — leads sit unassigned waiting for reps to claim them.",
+    painRu: "Ручной роутинг тормозит продажи — лиды лежат нераспределёнными.",
+    descriptionEn: "Auto-routing rules, stage automation, SLA triggers, and escalation policies.",
+    descriptionRu: "Правила авто-роутинга, автоматизация смены стадий, SLA-триггеры и эскалации.",
+    href: "/app/workflow",
+    navKey: "workflow",
     group: "system",
+    coming: true,
+    icon: "workflow",
+  },
+  {
+    id: "campaign",
+    labelKey: "campaign",
+    painEn: "Manual 1-on-1 outreach doesn't scale for broad lead lists.",
+    painRu: "Ручные точечные касания не масштабируются на большие базы лидов.",
+    descriptionEn: "Multi-touch outbound sequences, follow-up cadence, and warm-up automation.",
+    descriptionRu: "Многошаговые аутбаунд-последовательности, цепочки follow-up и авто-прогрев.",
+    href: "/app/campaign",
+    navKey: "campaign",
+    group: "crm",
+    coming: true,
+    icon: "campaign",
   },
 ];
 
@@ -127,6 +168,8 @@ export const DEFAULT_PLUGINS: Record<PluginId, boolean> = {
   metrics: true,
   "ai-scoring": true, // default-on: kill FIFO cold leads
   import: true,
+  workflow: false,
+  campaign: false,
 };
 
 export function mergePlugins(
@@ -145,6 +188,6 @@ export function isPluginEnabled(
 
 export function navPlugins(plugins: Record<PluginId, boolean>) {
   return PLUGIN_REGISTRY.filter(
-    (p) => p.href && p.navKey && isPluginEnabled(plugins, p.id)
+    (p) => p.href && p.navKey && !p.coming && isPluginEnabled(plugins, p.id)
   );
 }
