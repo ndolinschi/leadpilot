@@ -108,3 +108,33 @@ export function scoreLead(features: LeadFeatures): ScoreResult {
 export function applyScore<T extends LeadFeatures & { id: string }>(lead: T): T & ScoreResult {
   return { ...lead, ...scoreLead(lead) };
 }
+
+export function normalizeSeniority(val: unknown): Seniority {
+  const str = String(val || "").toLowerCase();
+  if (
+    str.includes("exec") ||
+    str.includes("c-level") ||
+    str.includes("director") ||
+    str.includes("chief") ||
+    str.includes("founder") ||
+    str.includes("vp")
+  ) {
+    return "exec";
+  }
+  if (
+    str.includes("senior") ||
+    str.includes("head") ||
+    str.includes("lead")
+  ) {
+    return "senior";
+  }
+  if (
+    str.includes("junior") ||
+    str.includes("intern") ||
+    str.includes("trainee") ||
+    str.includes("entry")
+  ) {
+    return "junior";
+  }
+  return "mid";
+}

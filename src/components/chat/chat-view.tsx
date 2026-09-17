@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { ButtonLink } from "@/components/button-link";
 import { format, formatDistanceToNow, isValid } from "date-fns";
 import { enUS, ru } from "date-fns/locale";
-import { toast } from "sonner";
-import { Send, Sparkles, ExternalLink, FileText } from "lucide-react";
-import { useLeadsStore } from "@/store/leads-store";
+import { Send, Sparkles, ExternalLink, FileText, ArrowLeft } from "lucide-react";
 import { t } from "@/lib/i18n";
 import type { ChatMessage } from "@/lib/types";
+import { useLeadsStore } from "@/store/leads-store";
+import { toast } from "sonner";
 import { ChannelBadge } from "@/components/channel-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -114,9 +114,11 @@ function buildChatFeed(messages: ChatMessage[]): ChatFeedItem[] {
 export function ChatView({
   threadId,
   compact,
+  showBackButton,
 }: {
   threadId: string;
   compact?: boolean;
+  showBackButton?: boolean;
 }) {
   const lang = useLeadsStore((s) => s.settings.language);
   const settings = useLeadsStore((s) => s.settings);
@@ -196,19 +198,32 @@ export function ChatView({
 
   return (
     <div className={cn("flex h-full min-h-0 flex-col", compact ? "min-h-[420px]" : "min-h-[560px]")}>
-      <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-semibold">{thread.subject}</p>
-            <ChannelBadge channel={thread.channel} />
+      <div className="flex items-center justify-between gap-3 border-b border-border/60 px-3 sm:px-4 py-3">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          {showBackButton && (
+            <ButtonLink
+              href="/app/inbox"
+              variant="ghost"
+              size="icon-sm"
+              className="lg:hidden shrink-0 text-zinc-600 hover:text-zinc-900"
+              title={i18n.inbox.backToList}
+            >
+              <ArrowLeft className="size-4" />
+            </ButtonLink>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate font-semibold text-sm sm:text-base">{thread.subject}</p>
+              <ChannelBadge channel={thread.channel} />
+            </div>
+            <p className="truncate text-xs text-muted-foreground">
+              {lead.name} · {lead.title} @ {lead.company}
+            </p>
           </div>
-          <p className="truncate text-sm text-muted-foreground">
-            {lead.name} · {lead.title} @ {lead.company}
-          </p>
         </div>
-        <ButtonLink href={`/app/leads/${lead.id}`} variant="outline" size="sm" className="inline-flex items-center gap-1.5">
+        <ButtonLink href={`/app/leads/${lead.id}`} variant="outline" size="sm" className="inline-flex items-center gap-1.5 shrink-0 text-xs">
           <ExternalLink className="size-3.5" />
-          {i18n.inbox.lead}
+          <span>{i18n.inbox.lead}</span>
         </ButtonLink>
       </div>
 

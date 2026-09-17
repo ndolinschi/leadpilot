@@ -20,8 +20,8 @@ export default function WorkflowPage() {
             <h1 className="text-2xl font-semibold tracking-tight">
               {isRu ? "Автоматизация и роутинг" : "Workflow Automation"}
             </h1>
-            <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-              {isRu ? "Скоро появится" : "Coming Soon"}
+            <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+              {isRu ? "Правила активны" : "Active Routing"}
             </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">

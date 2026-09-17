@@ -4,10 +4,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   Activity,
+  ApiKeyRecord,
   Channel,
   ChatMessage,
   Company,
   CompanySettings,
+  ConnectorState,
   Deal,
   DealStage,
   Lead,
@@ -20,6 +22,25 @@ import { applyScore } from "@/lib/score";
 import { generateMessage } from "@/lib/messages";
 import { parseLeadsCsv } from "@/lib/csv";
 import { DEFAULT_PLUGINS, mergePlugins } from "@/lib/plugins";
+import type { ConnectorManifest } from "@/lib/connectors/types";
+
+const defaultConnectors: Record<string, ConnectorState> = {
+  csv: { enabled: true, installed: true },
+  telegram: { enabled: true, installed: true },
+  viber: { enabled: true, installed: true },
+  facebook: { enabled: true, installed: true },
+  email: { enabled: true, installed: true },
+};
+
+const defaultApiKeys: ApiKeyRecord[] = [
+  {
+    id: "key_demo_01",
+    name: "Production Default Key",
+    prefix: "lp_live_e891b2...",
+    hashedKey: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    createdAt: new Date().toISOString(),
+  },
+];
 
 const defaultSettings: CompanySettings = {
   companyName: "LeadPilot",
@@ -28,6 +49,8 @@ const defaultSettings: CompanySettings = {
   productPitch:
     "Stop FIFO queues and tool-switching: ML priority, best channel, personalized first-touch — in one CRM inbox.",
   plugins: { ...DEFAULT_PLUGINS },
+  connectors: defaultConnectors,
+  apiKeys: defaultApiKeys,
 };
 
 function withMessages(leads: Lead[], settings: CompanySettings): Lead[] {
@@ -55,6 +78,7 @@ type State = {
   tasks: Task[];
   activities: Activity[];
   settings: CompanySettings;
+  customConnectors: ConnectorManifest[];
   hydrated: boolean;
   setHydrated: (v: boolean) => void;
   resetDemo: () => void;
@@ -65,6 +89,13 @@ type State = {
   importCsv: (text: string) => { count: number; errors: string[] };
   getLead: (id: string) => Lead | undefined;
   rescoreAll: () => void;
+  // Connectors & API Keys
+  addApiKey: (key: ApiKeyRecord) => void;
+  revokeApiKey: (id: string) => void;
+  toggleConnector: (id: string, enabled: boolean) => void;
+  updateConnectorConfig: (id: string, config: Record<string, string | boolean>) => void;
+  registerConnector: (manifest: ConnectorManifest) => void;
+  receiveWebhookLeadAndMessage: (lead: Lead, message?: ChatMessage) => { leadId: string; threadId: string };
   // CRM
   getCompany: (id: string) => Company | undefined;
   getThread: (id: string) => Thread | undefined;
@@ -90,6 +121,7 @@ function seedState(settings: CompanySettings) {
     tasks: seed.tasks,
     activities: seed.activities,
     settings,
+    customConnectors: [],
   };
 }
 
@@ -115,8 +147,150 @@ export const useLeadsStore = create<State>()(
               ...s.settings.plugins,
               ...(partial.plugins || {}),
             }),
+            connectors: {
+              ...s.settings.connectors,
+              ...(partial.connectors || {}),
+            },
           },
         })),
+      addApiKey: (key) =>
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            apiKeys: [key, ...(s.settings.apiKeys || [])],
+          },
+        })),
+      revokeApiKey: (id) =>
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            apiKeys: (s.settings.apiKeys || []).filter((k) => k.id !== id),
+          },
+        })),
+      toggleConnector: (id, enabled) =>
+        set((s) => {
+          const current = s.settings.connectors || defaultConnectors;
+          const entry = current[id] || { installed: true, enabled: false };
+          return {
+            settings: {
+              ...s.settings,
+              connectors: {
+                ...current,
+                [id]: { ...entry, enabled },
+              },
+            },
+          };
+        }),
+      updateConnectorConfig: (id, config) =>
+        set((s) => {
+          const current = s.settings.connectors || defaultConnectors;
+          const entry = current[id] || { installed: true, enabled: true };
+          return {
+            settings: {
+              ...s.settings,
+              connectors: {
+                ...current,
+                [id]: {
+                  ...entry,
+                  config: { ...(entry.config || {}), ...config },
+                },
+              },
+            },
+          };
+        }),
+      registerConnector: (manifest) =>
+        set((s) => {
+          const exists = s.customConnectors.some((c) => c.id === manifest.id);
+          const customConnectors = exists
+            ? s.customConnectors.map((c) => (c.id === manifest.id ? manifest : c))
+            : [manifest, ...s.customConnectors];
+          const connectors = {
+            ...(s.settings.connectors || defaultConnectors),
+            [manifest.id]: { installed: true, enabled: true },
+          };
+          return {
+            customConnectors,
+            settings: { ...s.settings, connectors },
+          };
+        }),
+      receiveWebhookLeadAndMessage: (lead, message) => {
+        const { leads, companies, threads, messages, activities } = get();
+        const existingLeadIndex = leads.findIndex((l) => l.id === lead.id || (lead.email && l.email === lead.email));
+        let activeLead: Lead;
+        let nextLeads = [...leads];
+
+        if (existingLeadIndex >= 0) {
+          activeLead = { ...leads[existingLeadIndex], ...lead };
+          nextLeads[existingLeadIndex] = activeLead;
+        } else {
+          activeLead = lead;
+          nextLeads = [activeLead, ...leads];
+
+          // Check if company exists
+          if (!companies.some((c) => c.name === lead.company)) {
+            const coId = uid("co");
+            set({
+              companies: [
+                {
+                  id: coId,
+                  name: lead.company,
+                  industry: lead.industry || "Other",
+                  size: lead.companySize || 10,
+                  country: lead.country || "Moldova",
+                },
+                ...companies,
+              ],
+            });
+          }
+        }
+
+        let targetThreadId = "";
+        let nextThreads = [...threads];
+        let nextMessages = [...messages];
+
+        if (message) {
+          targetThreadId = message.threadId || uid("th");
+          const threadIdx = threads.findIndex((t) => t.id === targetThreadId);
+          if (threadIdx >= 0) {
+            nextThreads[threadIdx] = {
+              ...threads[threadIdx],
+              updatedAt: message.at,
+              unread: (threads[threadIdx].unread || 0) + 1,
+            };
+          } else {
+            nextThreads = [
+              {
+                id: targetThreadId,
+                leadId: activeLead.id,
+                channel: message.channel || activeLead.channel || "messenger",
+                subject: `${activeLead.channel === "messenger" ? "Chat" : "Conversation"} · ${activeLead.name}`,
+                updatedAt: message.at,
+                unread: 1,
+              },
+              ...threads,
+            ];
+          }
+          nextMessages = [message, ...messages];
+        }
+
+        const newActivity: Activity = {
+          id: uid("act"),
+          leadId: activeLead.id,
+          type: "message_received",
+          title: `Inbound ${activeLead.channel || "webhook"} event received`,
+          detail: message?.body?.slice(0, 80) || activeLead.company,
+          at: new Date().toISOString(),
+        };
+
+        set({
+          leads: nextLeads,
+          threads: nextThreads,
+          messages: nextMessages,
+          activities: [newActivity, ...activities],
+        });
+
+        return { leadId: activeLead.id, threadId: targetThreadId };
+      },
       updateOutcome: (id, outcome) =>
         set((s) => ({
           leads: s.leads.map((l) => (l.id === id ? { ...l, outcome } : l)),
@@ -326,7 +500,7 @@ export const useLeadsStore = create<State>()(
         })),
     }),
     {
-      name: "leadpilot-crm-v2",
+      name: "leadpilot-crm-v3",
       partialize: (s) => ({
         companies: s.companies,
         leads: s.leads,
@@ -336,6 +510,7 @@ export const useLeadsStore = create<State>()(
         tasks: s.tasks,
         activities: s.activities,
         settings: s.settings,
+        customConnectors: s.customConnectors,
       }),
       onRehydrateStorage: () => (state, err) => {
         if (err) {
@@ -346,6 +521,11 @@ export const useLeadsStore = create<State>()(
             ...defaultSettings,
             ...state.settings,
             plugins: mergePlugins(state.settings?.plugins),
+            connectors: {
+              ...defaultConnectors,
+              ...(state.settings?.connectors || {}),
+            },
+            apiKeys: state.settings?.apiKeys?.length ? state.settings.apiKeys : defaultApiKeys,
           };
           state.setHydrated(true);
         } else {

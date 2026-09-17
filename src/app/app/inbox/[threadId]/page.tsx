@@ -30,12 +30,14 @@ export default function InboxThreadPage({
           <h1 className="text-2xl font-semibold tracking-tight">{i18n.inbox.title}</h1>
           <p className="text-sm text-muted-foreground">{i18n.inbox.subtitle}</p>
         </div>
-        <Card className="overflow-hidden p-0">
-          <div className="grid min-h-[640px] lg:grid-cols-[340px_1fr]">
-            <div className="hidden lg:block">
+        <Card className="overflow-hidden p-0 border-border/60 bg-white">
+          <div className="flex flex-col lg:grid lg:min-h-[640px] lg:grid-cols-[340px_1fr]">
+            <div className="hidden lg:block border-r border-border/60">
               <ThreadList query={q} onQueryChange={setQ} activeId={threadId} />
             </div>
-            <ChatView threadId={threadId} />
+            <div className="w-full flex-1 min-w-0">
+              <ChatView threadId={threadId} showBackButton />
+            </div>
           </div>
         </Card>
       </div>

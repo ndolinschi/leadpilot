@@ -1,7 +1,6 @@
 "use client";
 
 import { ButtonLink } from "@/components/button-link";
-
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import {
@@ -14,8 +13,8 @@ import {
   LineChart,
   Upload,
   Settings,
-  Workflow,
-  Megaphone,
+  Store,
+  Code2,
   type LucideIcon,
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
@@ -38,37 +37,19 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   PLUGIN_REGISTRY,
   mergePlugins,
-  navPlugins,
   isPluginEnabled,
   type PluginId,
 } from "@/lib/plugins";
 
-const ICONS: Record<string, LucideIcon> = {
-  inbox: Inbox,
-  leads: Users,
-  companies: Building2,
-  deals: Kanban,
-  tasks: CheckSquare,
-  metrics: LineChart,
-  import: Upload,
-  workflow: Workflow,
-  campaign: Megaphone,
-};
-
-function pluginNavLabel(
-  i18n: ReturnType<typeof t>,
-  key: string
-) {
-  return (i18n.nav as Record<string, string>)[key] || key;
-}
-
-export function AppShell({ children }: { children: React.ReactNode }) {
+function ShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { isMobile, setOpenMobile } = useSidebar();
   const lang = useLeadsStore((s) => s.settings.language);
   const pluginsRaw = useLeadsStore((s) => s.settings.plugins);
   const plugins = useMemo(() => mergePlugins(pluginsRaw), [pluginsRaw]);
@@ -78,16 +59,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     [threads]
   );
   const i18n = t(lang);
-
-  const crmNav = navPlugins(plugins).filter((p) => p.group === "crm");
-  const systemNav = navPlugins(plugins).filter((p) => p.group === "system");
+  const isRu = lang === "ru";
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
     return pathname === href || pathname.startsWith(href + "/");
   }
 
-  // Redirect if current route belongs to a disabled plugin (excluding coming-soon stub pages)
+  function navigate(href: string) {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+    router.push(href);
+  }
+
+  // Redirect if current route belongs to a disabled plugin
   useEffect(() => {
     const map: { prefix: string; id: PluginId }[] = [
       { prefix: "/app/inbox", id: "inbox" },
@@ -98,8 +84,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       { prefix: "/app/tasks", id: "tasks" },
       { prefix: "/app/metrics", id: "metrics" },
       { prefix: "/app/import", id: "import" },
-      { prefix: "/app/workflow", id: "workflow" },
-      { prefix: "/app/campaign", id: "campaign" },
     ];
     for (const m of map) {
       const def = PLUGIN_REGISTRY.find((p) => p.id === m.id);
@@ -112,39 +96,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [pathname, plugins, router]);
 
   return (
-    <SidebarProvider>
+    <>
       <Sidebar collapsible="icon" variant="inset">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 size="lg"
-                onClick={() => router.push("/")}
+                onClick={() => navigate("/")}
                 tooltip={i18n.brand}
               >
-                <div className="flex size-8 items-center justify-center rounded-lg bg-[#266df0] text-white">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#266df0] text-white shadow-2xs">
                   <LayoutDashboard className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{i18n.brand}</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    CRM · plugins
+                    {isRu ? "Обработка клиентов" : "Client Operations Desk"}
                   </span>
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
+
         <SidebarContent>
+          {/* Primary Operator Queue */}
           <SidebarGroup>
-            <SidebarGroupLabel>Overview</SidebarGroupLabel>
+            <SidebarGroupLabel>{isRu ? "Очередь" : "Queue"}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     isActive={isActive("/app", true)}
                     tooltip={i18n.nav.dashboard}
-                    onClick={() => router.push("/app")}
+                    onClick={() => navigate("/app")}
                   >
                     <LayoutDashboard />
                     <span>{i18n.nav.dashboard}</span>
@@ -154,67 +140,147 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {crmNav.length > 0 && (
-            <SidebarGroup>
-              <SidebarGroupLabel>CRM</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {crmNav.map((p) => {
-                    const Icon = ICONS[p.id] || Users;
-                    const label = pluginNavLabel(i18n, p.navKey!);
-                    return (
-                      <SidebarMenuItem key={p.id}>
-                        <SidebarMenuButton
-                          isActive={isActive(p.href!)}
-                          tooltip={label}
-                          onClick={() => router.push(p.href!)}
-                        >
-                          <Icon />
-                          <span>{label}</span>
-                        </SidebarMenuButton>
-                        {p.id === "inbox" && unread > 0 ? (
-                          <SidebarMenuBadge>
-                            <Badge
-                              variant="default"
-                              className="h-5 min-w-5 justify-center px-1 text-[10px]"
-                            >
-                              {unread}
-                            </Badge>
-                          </SidebarMenuBadge>
-                        ) : null}
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )}
-
+          {/* Operations: Leads, Conversations, Deals, Tasks, Companies */}
           <SidebarGroup>
-            <SidebarGroupLabel>System</SidebarGroupLabel>
+            <SidebarGroupLabel>{isRu ? "Обработка" : "Operations"}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {systemNav.map((p) => {
-                  const Icon = ICONS[p.id] || Upload;
-                  const label = pluginNavLabel(i18n, p.navKey!);
-                  return (
-                    <SidebarMenuItem key={p.id}>
-                      <SidebarMenuButton
-                        isActive={isActive(p.href!)}
-                        tooltip={label}
-                        onClick={() => router.push(p.href!)}
-                      >
-                        <Icon />
-                        <span>{label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                {isPluginEnabled(plugins, "leads") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={isActive("/app/leads")}
+                      tooltip={i18n.nav.leads}
+                      onClick={() => navigate("/app/leads")}
+                    >
+                      <Users />
+                      <span>{i18n.nav.leads}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
+                {isPluginEnabled(plugins, "inbox") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={isActive("/app/inbox") || isActive("/app/chat")}
+                      tooltip={i18n.nav.inbox}
+                      onClick={() => navigate("/app/inbox")}
+                    >
+                      <Inbox />
+                      <span>{i18n.nav.inbox}</span>
+                    </SidebarMenuButton>
+                    {unread > 0 && (
+                      <SidebarMenuBadge>
+                        <Badge
+                          variant="default"
+                          className="h-5 min-w-5 justify-center px-1 text-[10px] bg-blue-600 text-white"
+                        >
+                          {unread}
+                        </Badge>
+                      </SidebarMenuBadge>
+                    )}
+                  </SidebarMenuItem>
+                )}
+
+                {isPluginEnabled(plugins, "deals") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={isActive("/app/deals")}
+                      tooltip={i18n.nav.deals}
+                      onClick={() => navigate("/app/deals")}
+                    >
+                      <Kanban />
+                      <span>{i18n.nav.deals}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
+                {isPluginEnabled(plugins, "tasks") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={isActive("/app/tasks")}
+                      tooltip={i18n.nav.tasks}
+                      onClick={() => navigate("/app/tasks")}
+                    >
+                      <CheckSquare />
+                      <span>{i18n.nav.tasks}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
+                {isPluginEnabled(plugins, "companies") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={isActive("/app/companies")}
+                      tooltip={i18n.nav.companies}
+                      onClick={() => navigate("/app/companies")}
+                    >
+                      <Building2 />
+                      <span>{i18n.nav.companies}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Modules & Connectors */}
+          <SidebarGroup>
+            <SidebarGroupLabel>{isRu ? "Модули и каналы" : "Connectors & Modules"}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {isPluginEnabled(plugins, "import") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={isActive("/app/import")}
+                      tooltip={i18n.nav.import}
+                      onClick={() => navigate("/app/import")}
+                    >
+                      <Upload />
+                      <span>{i18n.nav.import}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={isActive("/app/marketplace")}
+                    tooltip={i18n.nav.marketplace}
+                    onClick={() => navigate("/app/marketplace")}
+                  >
+                    <Store />
+                    <span>{i18n.nav.marketplace}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={isActive("/app/developers")}
+                    tooltip={i18n.nav.developers}
+                    onClick={() => navigate("/app/developers")}
+                  >
+                    <Code2 />
+                    <span>{i18n.nav.developers}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                {isPluginEnabled(plugins, "metrics") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={isActive("/app/metrics")}
+                      tooltip={i18n.nav.metrics}
+                      onClick={() => navigate("/app/metrics")}
+                    >
+                      <LineChart />
+                      <span>{i18n.nav.metrics}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     isActive={isActive("/app/settings")}
                     tooltip={i18n.nav.settings}
-                    onClick={() => router.push("/app/settings")}
+                    onClick={() => navigate("/app/settings")}
                   >
                     <Settings />
                     <span>{i18n.nav.settings}</span>
@@ -224,6 +290,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+
         <SidebarFooter>
           <SidebarSeparator />
           <div className="flex items-center justify-between gap-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
@@ -234,14 +301,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </SidebarFooter>
       </Sidebar>
+
       <SidebarInset>
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-white/90 px-4 backdrop-blur">
-          <SidebarTrigger />
-          <div className="flex-1" />
-          <LanguageToggle className="flex gap-1 md:hidden" />
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-white/90 px-3 sm:px-4 backdrop-blur">
+          <div className="flex items-center gap-2 min-w-0">
+            <SidebarTrigger />
+            <span className="font-semibold text-sm truncate text-zinc-900 md:hidden">
+              {i18n.brand}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <LanguageToggle className="flex gap-1" />
+          </div>
         </header>
-        <main className="flex-1 bg-white p-4 md:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 bg-white p-3 sm:p-5 md:p-6 lg:p-8">{children}</main>
       </SidebarInset>
+    </>
+  );
+}
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <SidebarProvider>
+      <ShellInner>{children}</ShellInner>
     </SidebarProvider>
   );
 }

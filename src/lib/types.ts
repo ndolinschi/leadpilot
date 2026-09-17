@@ -136,12 +136,29 @@ export type PluginId =
   | "workflow"
   | "campaign";
 
+export interface ApiKeyRecord {
+  id: string;
+  name: string;
+  prefix: string;
+  hashedKey: string;
+  createdAt: string;
+  lastUsedAt?: string;
+}
+
+export type ConnectorState = {
+  enabled: boolean;
+  installed: boolean;
+  config?: Record<string, string | boolean>;
+};
+
 export type CompanySettings = {
   companyName: string;
   voice: string;
   language: Lang;
   productPitch: string;
   plugins?: Record<PluginId, boolean>;
+  apiKeys?: ApiKeyRecord[];
+  connectors?: Record<string, ConnectorState>;
 };
 
 export type ScoredLead = Lead &

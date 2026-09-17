@@ -20,8 +20,8 @@ export default function CampaignPage() {
             <h1 className="text-2xl font-semibold tracking-tight">
               {isRu ? "Аутбаунд-кампании" : "Outbound Campaigns"}
             </h1>
-            <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-              {isRu ? "Скоро появится" : "Coming Soon"}
+            <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+              {isRu ? "Сценарии активны" : "Active Cadence"}
             </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">

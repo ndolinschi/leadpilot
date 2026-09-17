@@ -9,6 +9,12 @@ import {
   Upload,
   Zap,
   Kanban,
+  CheckCircle2,
+  XCircle,
+  MinusCircle,
+  Clock,
+  ArrowRight,
+  Flame,
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
@@ -37,21 +43,26 @@ export default function OverviewPage() {
         .reduce((s, d) => s + d.value, 0),
     [deals]
   );
-  const wonDealsCount = useMemo(
-    () => deals.filter((d) => d.stage === "won").length,
-    [deals]
-  );
   const highPriorityCount = useMemo(
     () => leads.filter((l) => (l.score ?? 0) >= 70).length,
     [leads]
   );
-  const topLeads = useMemo(
-    () =>
-      [...leads]
-        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-        .slice(0, 6),
+
+  const verdictCounts = useMemo(() => {
+    const won = leads.filter((l) => l.outcome === "won").length;
+    const lost = leads.filter((l) => l.outcome === "lost").length;
+    const noReply = leads.filter((l) => l.outcome === "no_reply").length;
+    const pending = leads.filter((l) => !l.outcome).length;
+    return { won, lost, noReply, pending };
+  }, [leads]);
+
+  const sortedLeads = useMemo(
+    () => [...leads].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)),
     [leads]
   );
+
+  const topLeads = useMemo(() => sortedLeads.slice(0, 6), [sortedLeads]);
+
   const recent = useMemo(
     () =>
       [...threads]
@@ -67,10 +78,9 @@ export default function OverviewPage() {
     )[0];
   }, [threads]);
 
-  const firstThreadLead = useMemo(() => {
-    if (!firstThread) return leads[0] ?? null;
-    return leads.find((l) => l.id === firstThread.leadId) || leads[0] || null;
-  }, [firstThread, leads]);
+  const hotLead = useMemo(() => {
+    return sortedLeads[0] ?? null;
+  }, [sortedLeads]);
 
   const firstThreadId = firstThread?.id ?? "th_001";
 
@@ -90,6 +100,7 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6">
+      {/* Top Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -97,35 +108,41 @@ export default function OverviewPage() {
           </h1>
           <p className="text-sm text-muted-foreground">{i18n.overviewStory.heroSub}</p>
         </div>
-        <ButtonLink href={`/app/inbox/${firstThreadId}`} variant="outline">
-          {i18n.app.openInbox}
-        </ButtonLink>
+        <div className="flex items-center gap-2">
+          <ButtonLink href={`/app/inbox/${firstThreadId}`} variant="outline">
+            {i18n.app.openInbox}
+          </ButtonLink>
+          <ButtonLink href="/app/marketplace" variant="outline">
+            {i18n.nav.marketplace}
+          </ButtonLink>
+        </div>
       </div>
 
-      {/* Huge Open First Chat CTA Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/40 p-6 shadow-xs">
-        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
+      {/* Operator Queue: Next Hot Lead Banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50/90 via-white to-blue-50/40 p-5 sm:p-6 shadow-2xs">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="bg-[#266df0] text-white hover:bg-[#266df0]">
-                {i18n.overviewStory.heroBadge}
+              <Badge className="bg-[#266df0] text-white hover:bg-[#266df0] inline-flex items-center gap-1">
+                <Flame className="size-3" />
+                <span>{isRu ? "Следующий горячий лид" : "Next Hot Lead"}</span>
               </Badge>
-              <span className="text-xs font-medium text-blue-700">
-                {isRu ? "Быстрый старт за 60 секунд" : "60-Second Value Demo"}
+              <span className="text-xs font-semibold text-blue-700">
+                P(convert) = {((hotLead?.probability ?? 0.94) * 100).toFixed(0)}%
               </span>
             </div>
             <h2 className="text-xl font-bold tracking-tight text-zinc-900 md:text-2xl">
               {i18n.overviewStory.openChatCta}
             </h2>
             <p className="text-sm text-zinc-600">
-              {firstThreadLead ? (
+              {hotLead ? (
                 <>
-                  <span className="font-semibold text-zinc-900">{firstThreadLead.name}</span>
+                  <span className="font-semibold text-zinc-900">{hotLead.name}</span>
                   {" · "}
-                  <span>{firstThreadLead.title} @ {firstThreadLead.company}</span>
+                  <span>{hotLead.title} @ {hotLead.company}</span>
                   {" · "}
                   <span className="font-medium text-blue-700">
-                    {isRu ? "Приоритет" : "Score"}: {(firstThreadLead.score ?? 94.2).toFixed(1)}/100
+                    {isRu ? "Рекомендованный канал" : "Channel"}: {i18n.channels[hotLead.channel ?? "messenger"]}
                   </span>
                 </>
               ) : (
@@ -134,13 +151,23 @@ export default function OverviewPage() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
+            {hotLead && (
+              <ButtonLink
+                href={`/app/leads/${hotLead.id}`}
+                variant="outline"
+                size="lg"
+                className="text-sm"
+              >
+                {isRu ? "Карточка лида" : "Inspect Lead"}
+              </ButtonLink>
+            )}
             <ButtonLink
               href={`/app/inbox/${firstThreadId}`}
               size="lg"
-              className="inline-flex items-center justify-center gap-2 text-base font-semibold shadow-md shadow-blue-500/10"
+              className="inline-flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-blue-500/10"
             >
-              <MessageSquare className="size-5" />
-              <span>{isRu ? "Открыть чат лида #1 →" : "Open First Chat →"}</span>
+              <MessageSquare className="size-4" />
+              <span>{isRu ? "Открыть первый чат →" : "Open First Chat →"}</span>
             </ButtonLink>
           </div>
         </div>
@@ -148,8 +175,8 @@ export default function OverviewPage() {
 
       {/* 4 Pipeline Story Cards */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Card 1: Collect */}
-        <Card className="flex flex-col justify-between border-zinc-200 bg-white transition-colors hover:border-blue-400/60">
+        {/* Card 1: Find */}
+        <Card className="flex flex-col justify-between border-zinc-200 bg-white shadow-2xs transition-colors hover:border-blue-400/60">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -160,10 +187,10 @@ export default function OverviewPage() {
               </div>
             </div>
             <CardTitle className="pt-2 text-2xl font-bold tracking-tight">
-              {leads.length} <span className="text-sm font-normal text-muted-foreground">{isRu ? "лидов" : "contacts"}</span>
+              {leads.length} <span className="text-sm font-normal text-muted-foreground">{isRu ? "контактов" : "contacts"}</span>
             </CardTitle>
             <CardDescription className="text-xs">
-              {i18n.overviewStory.step1Plugin} · CSV & forms
+              {i18n.overviewStory.step1Plugin} · Facebook & Viber
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-2">
@@ -173,8 +200,8 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
 
-        {/* Card 2: Classify */}
-        <Card className="flex flex-col justify-between border-zinc-200 bg-white transition-colors hover:border-blue-400/60">
+        {/* Card 2: Score */}
+        <Card className="flex flex-col justify-between border-zinc-200 bg-white shadow-2xs transition-colors hover:border-blue-400/60">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -198,8 +225,8 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
 
-        {/* Card 3: Work (Chat) */}
-        <Card className="flex flex-col justify-between border-blue-200 bg-blue-50/20 transition-colors hover:border-blue-400">
+        {/* Card 3: Talk */}
+        <Card className="flex flex-col justify-between border-blue-200 bg-blue-50/20 shadow-2xs transition-colors hover:border-blue-400">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-blue-700">
@@ -210,7 +237,7 @@ export default function OverviewPage() {
               </div>
             </div>
             <CardTitle className="pt-2 text-2xl font-bold tracking-tight">
-              {threads.length} <span className="text-sm font-normal text-muted-foreground">{isRu ? "чатов" : "chats"}</span>
+              {threads.length} <span className="text-sm font-normal text-muted-foreground">{isRu ? "диалогов" : "chats"}</span>
               {unread > 0 && (
                 <Badge className="ml-2 bg-blue-600 text-white text-[10px] h-5 px-1.5">
                   {unread} {isRu ? "новых" : "unread"}
@@ -229,7 +256,7 @@ export default function OverviewPage() {
         </Card>
 
         {/* Card 4: Verdict */}
-        <Card className="flex flex-col justify-between border-zinc-200 bg-white transition-colors hover:border-blue-400/60">
+        <Card className="flex flex-col justify-between border-zinc-200 bg-white shadow-2xs transition-colors hover:border-blue-400/60">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -240,7 +267,7 @@ export default function OverviewPage() {
               </div>
             </div>
             <CardTitle className="pt-2 text-2xl font-bold tracking-tight">
-              ${Math.round(pipeline / 1000)}k <span className="text-sm font-normal text-muted-foreground">· {wonDealsCount} {isRu ? "выиграно" : "won"}</span>
+              ${Math.round(pipeline / 1000)}k <span className="text-sm font-normal text-muted-foreground">· {verdictCounts.won} {isRu ? "выиграно" : "won"}</span>
             </CardTitle>
             <CardDescription className="text-xs">
               {i18n.overviewStory.step4Plugin} · outcomes
@@ -254,14 +281,45 @@ export default function OverviewPage() {
         </Card>
       </div>
 
+      {/* Verdict Summary Counts Bar */}
+      <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              {i18n.overviewStory.verdictStats}:
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 text-xs px-2.5 py-1 inline-flex items-center gap-1.5">
+              <CheckCircle2 className="size-3.5" />
+              <span>{i18n.overviewStory.wonCount}: {verdictCounts.won}</span>
+            </Badge>
+            <Badge className="bg-rose-600 text-white hover:bg-rose-600 text-xs px-2.5 py-1 inline-flex items-center gap-1.5">
+              <XCircle className="size-3.5" />
+              <span>{i18n.overviewStory.lostCount}: {verdictCounts.lost}</span>
+            </Badge>
+            <Badge className="bg-amber-600 text-white hover:bg-amber-600 text-xs px-2.5 py-1 inline-flex items-center gap-1.5">
+              <MinusCircle className="size-3.5" />
+              <span>{i18n.overviewStory.noReplyCount}: {verdictCounts.noReply}</span>
+            </Badge>
+            <Badge variant="outline" className="text-xs px-2.5 py-1 border-zinc-300 text-zinc-700 inline-flex items-center gap-1.5">
+              <Clock className="size-3.5" />
+              <span>{i18n.overviewStory.pendingCount}: {verdictCounts.pending}</span>
+            </Badge>
+          </div>
+        </div>
+      </div>
+
       {/* Top leads & Recent chats */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-zinc-200 bg-white">
-          <CardHeader className="flex flex-row items-center justify-between">
+        <Card className="border-zinc-200 bg-white shadow-2xs">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-base">{i18n.app.topLeads}</CardTitle>
-            <ButtonLink href="/app/leads" variant="ghost" size="sm">{i18n.app.viewAll}</ButtonLink>
+            <ButtonLink href="/app/leads" variant="ghost" size="sm" className="text-xs">
+              {i18n.app.viewAll}
+            </ButtonLink>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-3 pt-0">
             {topLeads.map((lead) => (
               <Link
                 key={lead.id}
@@ -269,13 +327,13 @@ export default function OverviewPage() {
                 className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2 transition-colors hover:bg-muted/50"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{lead.name}</p>
+                  <p className="truncate font-medium text-sm">{lead.name}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {lead.company} · {lead.title}
                   </p>
                 </div>
                 {lead.channel && <ChannelBadge channel={lead.channel} />}
-                <div className="w-24 shrink-0">
+                <div className="w-20 sm:w-24 shrink-0">
                   <ScoreBar score={lead.score ?? 0} />
                 </div>
               </Link>
@@ -283,14 +341,14 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-zinc-200 bg-white">
-          <CardHeader className="flex flex-row items-center justify-between">
+        <Card className="border-zinc-200 bg-white shadow-2xs">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-base">{i18n.app.recentChats}</CardTitle>
-            <ButtonLink href={`/app/inbox/${firstThreadId}`} variant="ghost" size="sm">
+            <ButtonLink href={`/app/inbox/${firstThreadId}`} variant="ghost" size="sm" className="text-xs">
               {i18n.app.viewAll}
             </ButtonLink>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-3 pt-0">
             {recent.map((th) => {
               const lead = leads.find((l) => l.id === th.leadId);
               return (
@@ -300,7 +358,7 @@ export default function OverviewPage() {
                   className="flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2 transition-colors hover:bg-muted/50"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{th.subject}</p>
+                    <p className="truncate font-medium text-sm">{th.subject}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       {lead?.name} ·{" "}
                       {formatDistanceToNow(new Date(th.updatedAt), {

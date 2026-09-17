@@ -9,6 +9,7 @@ import { t } from "@/lib/i18n";
 import { ThreadList } from "@/components/chat/thread-list";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useIsLarge } from "@/hooks/use-mobile";
 import {
   Empty,
   EmptyHeader,
@@ -20,6 +21,7 @@ import {
 
 export default function InboxPage() {
   const router = useRouter();
+  const isLarge = useIsLarge();
   const lang = useLeadsStore((s) => s.settings.language);
   const hydrated = useLeadsStore((s) => s.hydrated);
   const threads = useLeadsStore((s) => s.threads);
@@ -37,11 +39,12 @@ export default function InboxPage() {
     return sorted[0]?.id ?? null;
   }, [threads]);
 
+  // On desktop, auto-redirect to first conversation for dual-pane view
   useEffect(() => {
-    if (hydrated && firstThreadId) {
+    if (hydrated && isLarge && firstThreadId) {
       router.replace(`/app/inbox/${firstThreadId}`);
     }
-  }, [hydrated, firstThreadId, router]);
+  }, [hydrated, isLarge, firstThreadId, router]);
 
   function handleOpenDemo() {
     if (threads.length > 0) {
@@ -69,9 +72,11 @@ export default function InboxPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{i18n.inbox.title}</h1>
           <p className="text-sm text-muted-foreground">{i18n.inbox.subtitle}</p>
         </div>
-        <Card className="overflow-hidden p-0">
-          <div className="grid min-h-[640px] lg:grid-cols-[340px_1fr]">
-            <ThreadList query={q} onQueryChange={setQ} />
+        <Card className="overflow-hidden p-0 border-border/60 bg-white">
+          <div className="flex flex-col lg:grid lg:min-h-[640px] lg:grid-cols-[340px_1fr]">
+            <div className="w-full">
+              <ThreadList query={q} onQueryChange={setQ} />
+            </div>
             <div className="hidden items-center justify-center p-8 text-center text-muted-foreground lg:flex">
               {firstThreadId ? (
                 <div className="space-y-2">

@@ -404,11 +404,42 @@ export default function LeadDetailPage({
             )}
           </div>
 
+          {aiOn && (factors.up.length > 0 || factors.down.length > 0) && (
+            <Card className="border-border/60 bg-white shadow-2xs">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold text-zinc-900">
+                    {i18n.detail.explain}
+                  </CardTitle>
+                  <Badge variant="outline" className="text-[10px] font-normal border-blue-200 text-blue-700 bg-blue-50/50">
+                    SHAP-like ML surrogate
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-muted-foreground pt-0.5">
+                  {i18n.detail.explainHint}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-1">
+                <FactorGroup
+                  title={i18n.detail.raise}
+                  items={factors.up.slice(0, 3)}
+                  max={factors.max}
+                  tone="up"
+                />
+                <FactorGroup
+                  title={i18n.detail.lower}
+                  items={factors.down.slice(0, 2)}
+                  max={factors.max}
+                  tone="down"
+                />
+              </CardContent>
+            </Card>
+          )}
+
           <Tabs defaultValue="chat">
             <TabsList>
               <TabsTrigger value="chat">{i18n.detail.chat}</TabsTrigger>
               <TabsTrigger value="message">{i18n.detail.message}</TabsTrigger>
-              <TabsTrigger value="explain">{i18n.detail.explain}</TabsTrigger>
               <TabsTrigger value="activity">{i18n.detail.timeline}</TabsTrigger>
             </TabsList>
 

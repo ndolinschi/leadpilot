@@ -4,6 +4,7 @@ import { PluginGate } from "@/components/plugin-gate";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import Link from "next/link";
 import {
   Upload,
   Download,
@@ -11,6 +12,7 @@ import {
   Share2,
   Bot,
   Send,
+  ArrowRight,
 } from "lucide-react";
 import { useLeadsStore } from "@/store/leads-store";
 import { t } from "@/lib/i18n";
@@ -167,60 +169,84 @@ export default function ImportPage() {
           </Card>
         )}
 
-        {/* Channel Connectors Roadmap Grid */}
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
-              {i18n.importPage.connectorsTitle}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {i18n.importPage.connectorsSubtitle}
-            </p>
+        {/* Channel Connectors Grid */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
+                {i18n.importPage.connectorsTitle}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {i18n.importPage.connectorsSubtitle}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" render={<Link href="/app/marketplace" />}>
+              {i18n.importPage.openMarketplace}
+              <ArrowRight className="ml-1.5 size-3.5" />
+            </Button>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <Card className="border-zinc-200 bg-zinc-50/40">
+            <Card className="border-border/60 bg-white hover:border-[#266df0]/40 transition-colors">
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
                   <Share2 className="size-4 text-blue-600" />
-                  <Badge variant="outline" className="text-[10px] text-zinc-500 border-dashed">
-                    Coming soon
+                  <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] hover:bg-blue-50">
+                    Marketplace
                   </Badge>
                 </div>
                 <CardTitle className="text-sm pt-1">{i18n.importPage.fbComing}</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 pt-1 text-xs text-muted-foreground">
-                {i18n.importPage.fbDesc}
+              <CardContent className="p-4 pt-1 text-xs text-muted-foreground flex flex-col justify-between h-24">
+                <span>{i18n.importPage.fbDesc}</span>
+                <Link
+                  href="/app/marketplace"
+                  className="text-xs font-medium text-[#266df0] hover:underline flex items-center gap-1 mt-2"
+                >
+                  Configure in Marketplace <ArrowRight className="size-3" />
+                </Link>
               </CardContent>
             </Card>
 
-            <Card className="border-zinc-200 bg-zinc-50/40">
+            <Card className="border-border/60 bg-white hover:border-[#266df0]/40 transition-colors">
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
                   <Bot className="size-4 text-purple-600" />
-                  <Badge variant="outline" className="text-[10px] text-zinc-500 border-dashed">
-                    Coming soon
+                  <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-[10px] hover:bg-purple-50">
+                    Live Webhook
                   </Badge>
                 </div>
                 <CardTitle className="text-sm pt-1">{i18n.importPage.viberComing}</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 pt-1 text-xs text-muted-foreground">
-                {i18n.importPage.viberDesc}
+              <CardContent className="p-4 pt-1 text-xs text-muted-foreground flex flex-col justify-between h-24">
+                <span>{i18n.importPage.viberDesc}</span>
+                <Link
+                  href="/app/marketplace"
+                  className="text-xs font-medium text-[#266df0] hover:underline flex items-center gap-1 mt-2"
+                >
+                  Test Webhook <ArrowRight className="size-3" />
+                </Link>
               </CardContent>
             </Card>
 
-            <Card className="border-zinc-200 bg-zinc-50/40">
+            <Card className="border-border/60 bg-white hover:border-[#266df0]/40 transition-colors">
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between">
                   <Send className="size-4 text-sky-600" />
-                  <Badge variant="outline" className="text-[10px] text-zinc-500 border-dashed">
-                    Coming soon
+                  <Badge className="bg-sky-50 text-sky-700 border-sky-200 text-[10px] hover:bg-sky-50">
+                    Live Webhook
                   </Badge>
                 </div>
                 <CardTitle className="text-sm pt-1">{i18n.importPage.telegramComing}</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 pt-1 text-xs text-muted-foreground">
-                {i18n.importPage.telegramDesc}
+              <CardContent className="p-4 pt-1 text-xs text-muted-foreground flex flex-col justify-between h-24">
+                <span>{i18n.importPage.telegramDesc}</span>
+                <Link
+                  href="/app/marketplace"
+                  className="text-xs font-medium text-[#266df0] hover:underline flex items-center gap-1 mt-2"
+                >
+                  Test Webhook <ArrowRight className="size-3" />
+                </Link>
               </CardContent>
             </Card>
           </div>
