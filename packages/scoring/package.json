@@ -1,0 +1,17 @@
+{
+  "name": "@leadpilot/scoring",
+  "version": "0.1.0",
+  "description": "LeadPilot lead scoring engine with JS logistic regression and TypeSafe Jev adapter",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@leadpilot/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  },
+  "private": true
+}

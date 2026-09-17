@@ -1,3 +1,4 @@
+/** Demo sample data — never present as live production. */
 import type {
   Activity,
   Channel,

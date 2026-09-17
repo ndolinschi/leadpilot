@@ -19,7 +19,13 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@leadpilot/core": ["./packages/core/src/index.ts"],
+      "@leadpilot/core/*": ["./packages/core/src/*"],
+      "@leadpilot/connectors": ["./packages/connectors/src/index.ts"],
+      "@leadpilot/connectors/*": ["./packages/connectors/src/*"],
+      "@leadpilot/scoring": ["./packages/scoring/src/index.ts"],
+      "@leadpilot/scoring/*": ["./packages/scoring/src/*"]
     }
   },
   "include": [

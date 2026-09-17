@@ -1,3 +1,4 @@
+/** Demo sample data — never present as live production. */
 import type { Lead, Seniority } from "./types";
 import { applyScore } from "./score";
 import { generateMessage } from "./messages";
@@ -81,6 +82,7 @@ export function createSeedLeads(count = 64): Lead[] {
 
     const base: Lead = {
       id: `lead_${String(i + 1).padStart(3, "0")}`,
+      isDemoSample: true,
       name,
       title,
       company,

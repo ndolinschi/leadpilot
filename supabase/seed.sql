@@ -1,0 +1,2 @@
+-- Optional seed. Prefer app Demo sample (local) for anonymous visitors.
+-- Do NOT insert fake production rows. Demo data must set payload.isDemoSample = true.

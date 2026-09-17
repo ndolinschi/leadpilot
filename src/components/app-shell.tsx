@@ -87,7 +87,6 @@ function ShellInner({ children }: { children: React.ReactNode }) {
     ];
     for (const m of map) {
       const def = PLUGIN_REGISTRY.find((p) => p.id === m.id);
-      if (def?.coming) continue;
       if (pathname.startsWith(m.prefix) && !isPluginEnabled(plugins, m.id)) {
         router.replace("/app");
         break;
